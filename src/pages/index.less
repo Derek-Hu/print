@@ -1,0 +1,121 @@
+
+@font-face {
+  font-family: 'LiSu';
+  src: url('./lishu.ttf');
+}
+
+.root {
+  width: 250mm;
+}
+
+.settings {
+  padding: 10px 15px;
+}
+
+.title {
+  font-size: 10mm;
+}
+
+.kedu {
+  position: relative;
+  padding: 10mm 20mm 0 20mm;
+  .horizontal{
+    position: absolute;
+    left: 20mm;
+    top: 0;
+    font-size: 5mm;
+    width: 100%;
+    span {
+      display: inline-block;
+      text-align: right;
+
+      span {
+        transform: translate(50%, 0);
+      }
+    }
+  }
+
+  .vertical {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 297mm;
+    height: 100%;
+    font-size: 5mm;
+    span {
+      display: inline-block;
+    }
+  }
+}
+// 210mm×297mm
+.printAreaA4 {
+  font-family:LiSu;
+  width: 100%;
+  
+  .a4::after{
+    display: block;
+    position: absolute;
+    left: -20mm;
+    background-color: #aaa;
+    bottom: 0;
+    font-size: 6mm;
+    content: '第一页';
+    height: 100%;
+    width: 20mm;
+    z-index: 2;
+  }
+  .a4 + .a4::before{
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 6mm;
+    border-top: 2px dashed #eee;
+    height: 2px;
+    content: ' ';
+    width: 100%;
+    z-index: 3;
+  }
+  .a4 + .a4::after{
+    display: block;
+    position: absolute;
+    left: -20mm;
+    background-color: #aaa;
+    bottom: 0;
+    font-size: 6mm;
+    content: '下一页';
+    height: 100%;
+    width: 20mm;
+    z-index: 3;
+  }
+  .a4 {
+    width: 210mm;
+    height: 297mm;
+    color: #FFF;
+    background-color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .col {
+    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+  }
+}
+
+@media print {
+  .settings {
+    display: none;
+    visibility: hidden;
+  }
+}
