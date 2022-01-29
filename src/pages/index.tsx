@@ -1,8 +1,6 @@
 import { TextArea, Tag, Input, Toast, Slider, Form, Button } from 'antd-mobile';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
-import html2canvas from 'html2canvas';
-import { v4 } from 'uuid';
 
 const A4 = {
   w: 210,
@@ -20,8 +18,6 @@ const marks = {
   4: 4,
   5: 5,
   6: 6,
-  7: 7,
-  8: 8,
 };
 
 const defaultMark = 4;
@@ -108,6 +104,7 @@ export default function IndexPage() {
       renderH,
       // 实际占用列数
       actualCols,
+      printGap: Math.floor((A4.h - rows * height) / 2),
       gap: Math.floor((a4H - rows * renderH) / 2),
     };
     setSettings(configuration);
@@ -165,6 +162,7 @@ export default function IndexPage() {
     columns = 0,
     renderH = 0,
     gap = 0,
+    printGap = 0,
     a4H,
     width,
     height,
@@ -172,7 +170,6 @@ export default function IndexPage() {
     actualCols = 0,
     rows = 0,
     fontVOffset = 4,
-    imagePreview = {},
     pageSize = 0,
     text = '',
   } = (settings || {}) as any;
@@ -201,6 +198,7 @@ export default function IndexPage() {
             height: firstH,
             fontVOffset: defaultMark,
             text: '故人西辞黄鹤楼',
+            // text: '故'
           }}
           onValuesChange={onValuesChange}
           onFinish={onFinish}
@@ -217,7 +215,7 @@ export default function IndexPage() {
             label="单字宽度/宽度 5 ~ 210（毫米）"
             rules={[{ required: true, message: '请输入单个汉字宽度' }]}
           >
-            <Input min={5} max={A4.w} placeholder="最小宽度5mm，最大宽度210mm" />
+            <Input type="number" min={5} max={A4.w} placeholder="最小宽度5mm，最大宽度210mm" />
           </Form.Item>
 
           <Form.Item
@@ -225,7 +223,7 @@ export default function IndexPage() {
             label="单字高度/高度 5 ~ 297（毫米）"
             rules={[{ required: true, message: '请输入单个汉字高度' }]}
           >
-            <Input min={5} max={A4.h} placeholder="最小高度5mm，最大高度297mm" />
+            <Input type="number" min={5} max={A4.h} placeholder="最小高度5mm，最大高度297mm" />
           </Form.Item>
           <Form.Item label="打印的文字" name="text" rules={[{ required: true, message: '请输入要打印的文字' }]}>
             <TextArea
@@ -236,7 +234,7 @@ export default function IndexPage() {
           </Form.Item>
 
           <Form.Item name="fontVOffset" label="文字间距微调">
-            <Slider ticks={true} marks={marks} min={0} max={8} />
+            <Slider ticks={true} marks={marks} min={0} max={6} />
           </Form.Item>
         </Form>
 
@@ -269,7 +267,7 @@ export default function IndexPage() {
                             key={colIdx}
                             className={[styles.col, actualCols > colIdx ? '' : styles.emptyWord].join(' ')}
                             style={{
-                              fontSize: `${Math.min(renderW, renderH)}px`,
+                              // fontSize: `${Math.min(renderW, renderH)}px`,
                               width: `${renderW}px`,
                               height: `${renderH}px`,
                             }}
@@ -278,7 +276,7 @@ export default function IndexPage() {
                               style={{
                                 fontSize: `${baseSize}px`,
                                 transform: `scale(${renderW / baseSize}, ${
-                                  renderH / baseSize + (fontVOffset / 10) * (height / width)
+                                  renderH / baseSize + (fontVOffset / 10) * (renderW / baseSize) * (height / width)
                                 })`,
                               }}
                             >
@@ -303,7 +301,7 @@ export default function IndexPage() {
         {Array.from({ length: pageSize }).map((_p, pageIdx) => {
           return (
             <div key={pageIdx} style={{ width: `${A4.w}mm`, height: `${A4.h}mm` }}>
-              <div style={{ paddingTop: `${0}` }}>
+              <div style={{ paddingTop: `${printGap}mm` }}>
                 {Array.from({ length: rows }).map((_r, rowIdx) => (
                   <div key={rowIdx} className={styles.row}>
                     {Array.from({ length: columns }).map((_c, colIdx) => {
@@ -312,7 +310,7 @@ export default function IndexPage() {
                           key={colIdx}
                           className={[styles.col, actualCols > colIdx ? '' : styles.emptyWord].join(' ')}
                           style={{
-                            fontSize: `${Math.min(width, height)}mm`,
+                            // fontSize: `${Math.min(width, height)}mm`,
                             width: `${width}mm`,
                             height: `${height}mm`,
                             textAlign: 'center',
@@ -321,9 +319,9 @@ export default function IndexPage() {
                           <span
                             style={{
                               display: 'inline-block',
-                              fontSize: `${Math.min(width, height)}mm`,
+                              fontSize: `${width}mm`,
                               transform: `${
-                                width >= height ? `scale(${width / height}, 1)` : `scale(1, ${height / width})`
+                                `scale(1, ${(height /width) + ((fontVOffset / 10) * (height / width))})`
                               }`,
                             }}
                           >
