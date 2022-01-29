@@ -5,63 +5,82 @@
 }
 
 .root {
-  width: 250mm;
+  width: 100%;
 }
 
 .settings {
-  padding: 10px 15px;
+  padding: 0;
+  font-family: PingFangSC-Regular;
+
+  :global {
+    .adm-form-item-label-required{
+      display: none;
+    }
+    .adm-list-item {
+      padding-left: 10px;
+    }
+    .adm-list-item-content{
+      padding-right: 10px;
+    }
+    .adm-form-item-label{
+      font-family: PingFangSC-Regular;
+      font-size: 17px;
+      color: #333;
+      line-height: 24px;
+      margin-bottom: 12px;
+    }
+    .adm-input-element {
+      font-family: PingFangSC-Regular;
+      font-size: 15px;
+      color: #333333;
+    }
+    .adm-form .adm-form-footer {
+      padding: 16px 10px;
+      button {
+        font-family: PingFangSC-Regular;
+        font-size: 18px;
+        color: #FFFFFF;
+        text-align: center;
+      }
+    }
+  }
 }
 
 .title {
-  font-size: 10mm;
+  color: #969696;
+  background-color: #f4f7fa;
+  margin: 0;
+  font-family: PingFangSC-Medium;
+  font-size: 16px;
+  line-height: 45px;
+  color: #333333;
+  text-align: center;
+  padding: 0;
 }
 
 .kedu {
   position: relative;
-  padding: 10mm 20mm 0 20mm;
-  .horizontal{
-    position: absolute;
-    left: 20mm;
-    top: 0;
-    font-size: 5mm;
-    width: 100%;
-    span {
-      display: inline-block;
-      text-align: right;
+  padding: 0 0 0 20px;
 
-      span {
-        transform: translate(50%, 0);
-      }
-    }
-  }
-
-  .vertical {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 297mm;
-    height: 100%;
-    font-size: 5mm;
-    span {
-      display: inline-block;
-    }
-  }
 }
 // 210mm×297mm
 .printAreaA4 {
   font-family:LiSu;
   width: 100%;
   
+  .emptyWord {
+    display: none !important;
+  }
   .a4::after{
     display: block;
     position: absolute;
-    left: -20mm;
+    left: -20px;
     background-color: #aaa;
     bottom: 0;
-    font-size: 6mm;
-    content: '第一页';
+    font-size: 12px;
+    content: ' ';
     height: 100%;
-    width: 20mm;
+    width: 20px;
     z-index: 2;
   }
   .a4 + .a4::before{
@@ -69,7 +88,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    font-size: 6mm;
+    font-size: 12px;
     border-top: 2px dashed #eee;
     height: 2px;
     content: ' ';
@@ -79,30 +98,45 @@
   .a4 + .a4::after{
     display: block;
     position: absolute;
-    left: -20mm;
+    left: -20px;
     background-color: #aaa;
     bottom: 0;
-    font-size: 6mm;
-    content: '下一页';
+    font-size: 12px;
+    content: ' ';
     height: 100%;
-    width: 20mm;
+    width: 20px;
     z-index: 3;
   }
   .a4 {
-    width: 210mm;
-    height: 297mm;
+    width: 100%;
     color: #FFF;
     background-color: #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     position: relative;
+    display: flex;
+
+    & > div {
+      width: 100%;
+    }
   }
 
   .row {
     display: flex;
     align-items: center;
     justify-content: space-around;
+    position: relative;
+    .rowIndex {
+      position: absolute;
+      left: -20px;
+      top: 0;
+      display: block;
+      width: 20px;
+      color: #fff;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+      display: flex;
+      z-index: 5;
+    }
   }
   .col {
     display: inline-block;
@@ -118,4 +152,23 @@
     display: none;
     visibility: hidden;
   }
+
+  .printAreaA4 {
+    .row {
+      .rowIndex {
+        display: none;
+      }
+    }
+    .a4::before, .a4::after{
+      display: none;
+    }
+
+    .a4 + .a4::before{
+      display: none;
+    }
+    .a4 + .a4::after{
+      display: none;
+    }
+  }
+
 }
