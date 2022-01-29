@@ -96,8 +96,44 @@
   padding: 0 0 100px 20px;
   overflow: hidden;
 }
-// 210mm×297mm
 .printAreaA4 {
+  // display: none;
+  font-family: LiSu;
+  color: red;
+  // visibility: hidden;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  position: relative;
+  .rowIndex {
+    position: absolute;
+    left: -20px;
+    top: 0;
+    display: block;
+    width: 20px;
+    color: #fff;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    z-index: 5;
+  }
+}
+.col {
+  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  span {
+    line-height: 1;
+    font-size: 100px;
+  }
+}
+
+// 210mm×297mm
+.privewAreaA4 {
   font-family: LiSu;
   width: 100%;
   // position: absolute;
@@ -167,68 +203,31 @@
       max-height: 100%;
     }
   }
-
-  .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    position: relative;
-    .rowIndex {
-      position: absolute;
-      left: -20px;
-      top: 0;
-      display: block;
-      width: 20px;
-      color: #fff;
-      text-align: center;
-      align-items: center;
-      justify-content: center;
-      display: flex;
-      z-index: 5;
-    }
-  }
-  .col {
-    display: inline-block;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    span {
-      line-height: 1;
-      font-size: 100px;
-    }
-  }
 }
 .printImg {
   width: 100%;
 }
 
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
-  .settings {
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
+  }
+
+  .settings,
+  .kedu {
     display: none;
     visibility: hidden;
-
   }
 
   .printAreaA4 {
-    .a4 {
-      width: 794px;
-      height: 1123px;
-    }
-    .row {
-      .rowIndex {
-        display: none;
-      }
-    }
-    .a4::before,
-    .a4::after {
-      display: none;
-    }
-
-    .a4 + .a4::before {
-      display: none;
-    }
-    .a4 + .a4::after {
-      display: none;
-    }
+    visibility: visible;
+    display: block;
   }
 }

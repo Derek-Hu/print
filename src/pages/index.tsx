@@ -166,6 +166,8 @@ export default function IndexPage() {
     renderH = 0,
     gap = 0,
     a4H,
+    width,
+    height,
     renderW = 0,
     actualCols = 0,
     rows = 0,
@@ -254,10 +256,10 @@ export default function IndexPage() {
       </div>
 
       <div className={styles.kedu} style={{ paddingLeft: `${paddingLeft}px` }}>
-        <div className={styles.printAreaA4}>
+        <div className={styles.privewAreaA4}>
           {Array.from({ length: pageSize }).map((_p, pageIdx) => {
             return (
-              <div key={pageIdx} className={[styles.a4, 'page'].join(' ')} style={{ height: `${a4H}px` }}>
+              <div key={pageIdx} className={styles.a4} style={{ height: `${a4H}px` }}>
                 <div style={{ paddingTop: `${gap}px` }}>
                   {Array.from({ length: rows }).map((_r, rowIdx) => (
                     <div key={rowIdx} className={styles.row}>
@@ -275,7 +277,9 @@ export default function IndexPage() {
                             <span
                               style={{
                                 fontSize: `${baseSize}px`,
-                                transform: `scale(${renderW / baseSize}, ${renderH / baseSize + fontVOffset / 10})`,
+                                transform: `scale(${renderW / baseSize}, ${
+                                  renderH / baseSize + (fontVOffset / 10) * (height / width)
+                                })`,
                               }}
                             >
                               {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
@@ -293,6 +297,47 @@ export default function IndexPage() {
             );
           })}
         </div>
+      </div>
+
+      <div className={styles.printAreaA4}>
+        {Array.from({ length: pageSize }).map((_p, pageIdx) => {
+          return (
+            <div key={pageIdx} style={{ width: `${A4.w}mm`, height: `${A4.h}mm` }}>
+              <div style={{ paddingTop: `${0}` }}>
+                {Array.from({ length: rows }).map((_r, rowIdx) => (
+                  <div key={rowIdx} className={styles.row}>
+                    {Array.from({ length: columns }).map((_c, colIdx) => {
+                      return (
+                        <div
+                          key={colIdx}
+                          className={[styles.col, actualCols > colIdx ? '' : styles.emptyWord].join(' ')}
+                          style={{
+                            fontSize: `${Math.min(width, height)}mm`,
+                            width: `${width}mm`,
+                            height: `${height}mm`,
+                            textAlign: 'center',
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              fontSize: `${Math.min(width, height)}mm`,
+                              transform: `${
+                                width >= height ? `scale(${width / height}, 1)` : `scale(1, ${height / width})`
+                              }`,
+                            }}
+                          >
+                            {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
