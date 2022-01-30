@@ -368,9 +368,9 @@ export default function IndexPage() {
             footer={
               <div>
                 <p style={{ fontSize: '18px', color: '#aaa' }}>
-                  纸张尺寸 210mm * 297mm；
+                  纸张尺寸 210mm * 297mm
                   <br />
-                  字体宽{width}mm，一页最多显示{columns}列；
+                  字体宽{width}mm，一页最多显示{columns}列
                   <br />
                   字体高{width}mm，一页最多显示{rows}行
                 </p>
