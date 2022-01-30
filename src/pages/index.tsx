@@ -1,4 +1,13 @@
-import { TextArea, Tag, Input, ActionSheet, Toast, Slider, Form, Button } from 'antd-mobile';
+import {
+  TextArea,
+  Tag,
+  Input,
+  ActionSheet,
+  Toast,
+  Slider,
+  Form,
+  Button,
+} from 'antd-mobile';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
@@ -22,7 +31,16 @@ const marks = {
 
 const defaultMark = 3;
 
-const tagColors = ['primary', 'success', 'warning', 'danger', '#2db7f5', '#87d068', '#108ee9', '#2db7f5'];
+const tagColors = [
+  'primary',
+  'success',
+  'warning',
+  'danger',
+  '#2db7f5',
+  '#87d068',
+  '#108ee9',
+  '#2db7f5',
+];
 
 const CacheKey = 'PRINT_SETTINGS';
 const SizeKey = 'PRINT_SIZE_SETTINGS';
@@ -32,7 +50,16 @@ const FontKey = 'PRINT_FONT_SETTINGS';
 const firstW = 30;
 const firstH = 40;
 
-const defaultTemplate = ['25*25', '30*30', '30*40', '40*40', '50*40', '110*50', '120*60', '130*70'];
+const defaultTemplate = [
+  '25*25',
+  '30*30',
+  '30*40',
+  '40*40',
+  '50*40',
+  '110*50',
+  '120*60',
+  '130*70',
+];
 const MaxTag = 8;
 
 const basicColumns = [
@@ -55,7 +82,8 @@ export default function IndexPage() {
 
   const onSliderChange = (value: any) => {
     console.log('onSliderChange, ', value);
-    const level = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
+    const level =
+      typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
     setAdjustLevel(level);
     localStorage.setItem(AdjustLevelKey, level);
   };
@@ -72,7 +100,11 @@ export default function IndexPage() {
     setFontSheetVisible(false);
     localStorage.setItem(FontKey, JSON.stringify(action));
   };
-  const calculate = (values: { width: number; height: number; text: string }) => {
+  const calculate = (values: {
+    width: number;
+    height: number;
+    text: string;
+  }) => {
     const { width: ww, height: wh, text = '' } = values;
     if (text == null || text === undefined) {
       return;
@@ -162,7 +194,11 @@ export default function IndexPage() {
     localStorage.setItem(SizeKey, JSON.stringify(sizeSettings));
   };
 
-  const onFinish = (values: { width: number; height: number; text: string }) => {
+  const onFinish = (values: {
+    width: number;
+    height: number;
+    text: string;
+  }) => {
     console.log('onFinish', values);
     calculate(values);
     setTimeout(() => {
@@ -190,17 +226,21 @@ export default function IndexPage() {
   };
   useEffect(() => {
     try {
-      const configuration = JSON.parse(localStorage.getItem(CacheKey) as string);
+      const configuration = JSON.parse(
+        localStorage.getItem(CacheKey) as string,
+      );
       const sizeTemplate = JSON.parse(localStorage.getItem(SizeKey) as string);
       const font = JSON.parse(localStorage.getItem(FontKey) as string);
-      const adjustLevel = parseInt(localStorage.getItem(AdjustLevelKey) as string);
+      const adjustLevel = parseInt(
+        localStorage.getItem(AdjustLevelKey) as string,
+      );
       console.log('cache: ', configuration);
       setSettings(configuration);
       setFontFamily(font || basicColumns[0]);
       setAdjustLevel(isNaN(adjustLevel) ? defaultMark : adjustLevel);
       let templates = [];
       if (Array.isArray(sizeTemplate) && sizeTemplate.length) {
-        templates = sizeTemplate.filter(v => /\d+\*\d+/.test(v)).slice(0, 8);
+        templates = sizeTemplate.filter((v) => /\d+\*\d+/.test(v)).slice(0, 8);
       }
 
       if (!templates.length) {
@@ -256,7 +296,9 @@ export default function IndexPage() {
    * 2: 1 --> 210: 297 / 2
    */
 
-  const [iw, ih] = selectTag ? selectTag.split('*').map(v => parseFloat(v)) : [firstW, firstH];
+  const [iw, ih] = selectTag
+    ? selectTag.split('*').map((v) => parseFloat(v))
+    : [firstW, firstH];
   console.log('sizeSettings', sizeSettings);
   console.log('selectTag', selectTag);
 
@@ -266,15 +308,25 @@ export default function IndexPage() {
     <div className={styles.root}>
       <div className={styles.settings}>
         <div id="settingsArea">
-          <h1 className={styles.title} style={{fontFamily: fontFamily && fontFamily.key ? fontFamily.key : 'LiSu'}}>文字打印</h1>
+          <h1
+            className={styles.title}
+            style={{
+              fontFamily:
+                fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+            }}
+          >
+            文字打印
+          </h1>
           <Form.Item label="字体" onClick={() => setFontSheetVisible(true)}>
-            <span className={styles.fontName}>{fontFamily && fontFamily.text}</span>
+            <span className={styles.fontName}>
+              {fontFamily && fontFamily.text}
+            </span>
           </Form.Item>
 
           <ActionSheet
             extra="请选择打印的字体"
             onAction={onAction}
-            cancelText='取消'
+            cancelText="取消"
             visible={fontSheetVisible}
             actions={basicColumns}
             onClose={() => setFontSheetVisible(false)}
@@ -286,7 +338,9 @@ export default function IndexPage() {
                   {sizeSettings.slice(0, MaxTag).map((template, idx) => {
                     return (
                       <Tag
-                        className={selectTag === template ? styles.tagActive : ''}
+                        className={
+                          selectTag === template ? styles.tagActive : ''
+                        }
                         key={idx}
                         onClick={() => clickTag(template)}
                         color={selectTag === template ? 'danger' : 'default'}
@@ -312,7 +366,16 @@ export default function IndexPage() {
             onFinish={onFinish}
             footer={
               <Button block type="submit" color="primary" size="large">
-                预览（{fontFamily && fontFamily.text ? fontFamily.text : '隶书'}字体）
+                预览（
+                <span
+                  style={{
+                    fontFamily:
+                      fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+                  }}
+                >
+                  {fontFamily && fontFamily.text ? fontFamily.text : '隶书'}字体
+                </span>
+                ）
               </Button>
             }
             autoComplete="off"
@@ -326,7 +389,12 @@ export default function IndexPage() {
               label="单字宽度/宽度 5 ~ 210（毫米）"
               rules={[{ required: true, message: '请输入单个汉字宽度' }]}
             >
-              <Input type="number" min={5} max={A4.w} placeholder="最小宽度5mm，最大宽度210mm" />
+              <Input
+                type="number"
+                min={5}
+                max={A4.w}
+                placeholder="最小宽度5mm，最大宽度210mm"
+              />
             </Form.Item>
 
             <Form.Item
@@ -334,11 +402,24 @@ export default function IndexPage() {
               label="单字高度/高度 5 ~ 297（毫米）"
               rules={[{ required: true, message: '请输入单个汉字高度' }]}
             >
-              <Input type="number" min={5} max={A4.h} placeholder="最小高度5mm，最大高度297mm" />
+              <Input
+                type="number"
+                min={5}
+                max={A4.h}
+                placeholder="最小高度5mm，最大高度297mm"
+              />
             </Form.Item>
-            <Form.Item label="打印的文字" name="text" rules={[{ required: true, message: '请输入要打印的文字' }]}>
+            <Form.Item
+              label="打印的文字"
+              name="text"
+              rules={[{ required: true, message: '请输入要打印的文字' }]}
+            >
               <TextArea
-                showCount={length => <span className={styles.count}>字数统计：共 {length} 个字</span>}
+                showCount={(length) => (
+                  <span className={styles.count}>
+                    字数统计：共 {length} 个字
+                  </span>
+                )}
                 rows={3}
                 placeholder="点击输入要打印的内容"
               />
@@ -365,7 +446,14 @@ export default function IndexPage() {
 
             {pageSize ? (
               <Form.Item label="文字间距微调">
-                <Slider value={adjustLevel} onChange={onSliderChange} ticks={true} marks={marks} min={0} max={6} />
+                <Slider
+                  value={adjustLevel}
+                  onChange={onSliderChange}
+                  ticks={true}
+                  marks={marks}
+                  min={0}
+                  max={6}
+                />
               </Form.Item>
             ) : null}
           </>
@@ -373,11 +461,24 @@ export default function IndexPage() {
       </div>
 
       {textChanged ? null : (
-        <div className={styles.kedu} style={{ paddingLeft: `${paddingLeft}px` }}>
-          <div className={styles.privewAreaA4} style={{fontFamily: fontFamily && fontFamily.key ? fontFamily.key : 'LiSu'}}>
+        <div
+          className={styles.kedu}
+          style={{ paddingLeft: `${paddingLeft}px` }}
+        >
+          <div
+            className={styles.privewAreaA4}
+            style={{
+              fontFamily:
+                fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+            }}
+          >
             {Array.from({ length: pageSize }).map((_p, pageIdx) => {
               return (
-                <div key={pageIdx} className={styles.a4} style={{ height: `${a4H}px` }}>
+                <div
+                  key={pageIdx}
+                  className={styles.a4}
+                  style={{ height: `${a4H}px` }}
+                >
                   <div style={{ paddingTop: `${gap}px` }}>
                     {Array.from({ length: rows }).map((_r, rowIdx) => (
                       <div key={rowIdx} className={styles.row}>
@@ -385,7 +486,10 @@ export default function IndexPage() {
                           return (
                             <div
                               key={colIdx}
-                              className={[styles.col, actualCols > colIdx ? '' : styles.emptyWord].join(' ')}
+                              className={[
+                                styles.col,
+                                actualCols > colIdx ? '' : styles.emptyWord,
+                              ].join(' ')}
                               style={{
                                 // fontSize: `${Math.min(renderW, renderH)}px`,
                                 width: `${renderW}px`,
@@ -396,16 +500,23 @@ export default function IndexPage() {
                                 style={{
                                   fontSize: `${baseSize}px`,
                                   transform: `scale(${renderW / baseSize}, ${
-                                    renderH / baseSize + (adjustLevel / 10) * (renderW / baseSize) * (height / width)
+                                    renderH / baseSize +
+                                    (adjustLevel / 10) *
+                                      (renderW / baseSize) *
+                                      (height / width)
                                   })`,
                                 }}
                               >
-                                {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
+                                {text[getTextIndex(pageIdx, rowIdx, colIdx)] ||
+                                  ''}
                               </span>
                             </div>
                           );
                         })}
-                        <span className={styles.rowIndex} style={{ height: `${renderH}px` }}>
+                        <span
+                          className={styles.rowIndex}
+                          style={{ height: `${renderH}px` }}
+                        >
                           {rowIdx + 1}
                         </span>
                       </div>
@@ -435,10 +546,24 @@ export default function IndexPage() {
         </div>
       ) : null}
 
-      <div className={styles.printAreaA4} style={{fontFamily: fontFamily && fontFamily.key ? fontFamily.key : 'LiSu'}}>
+      <div
+        className={styles.printAreaA4}
+        style={{
+          fontFamily: fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+        }}
+      >
         {Array.from({ length: pageSize }).map((_p, pageIdx) => {
           return (
-            <div key={pageIdx} style={{ margin: 0, padding: 0, border: 0, width: `${A4.w}mm`, height: `${A4.h}mm` }}>
+            <div
+              key={pageIdx}
+              style={{
+                margin: 0,
+                padding: 0,
+                border: 0,
+                width: `${A4.w}mm`,
+                height: `${A4.h}mm`,
+              }}
+            >
               <div style={{ paddingTop: `${printGap}mm` }}>
                 {Array.from({ length: rows }).map((_r, rowIdx) => (
                   <div key={rowIdx} className={styles.row}>
@@ -446,7 +571,10 @@ export default function IndexPage() {
                       return (
                         <div
                           key={colIdx}
-                          className={[styles.col, actualCols > colIdx ? '' : styles.emptyWord].join(' ')}
+                          className={[
+                            styles.col,
+                            actualCols > colIdx ? '' : styles.emptyWord,
+                          ].join(' ')}
                           style={{
                             // fontSize: `${Math.min(width, height)}mm`,
                             width: `${width}mm`,
@@ -458,7 +586,10 @@ export default function IndexPage() {
                             style={{
                               display: 'inline-block',
                               fontSize: `${width}mm`,
-                              transform: `${`scale(1, ${height / width + (adjustLevel / 10) * (height / width)})`}`,
+                              transform: `${`scale(1, ${
+                                height / width +
+                                (adjustLevel / 10) * (height / width)
+                              })`}`,
                             }}
                           >
                             {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
