@@ -2,6 +2,18 @@
   font-family: 'LiSu';
   src: url('./lishu.ttf');
 }
+@font-face {
+  font-family: 'KaiTi';
+  src: url('./kaishu.ttf');
+}
+@font-face {
+  font-family: 'Weibei SC';
+  src: url('./weibeiti.ttf');
+}
+@font-face {
+  font-family: 'STXingkai';
+  src: url('./xingshu.ttf');
+}
 
 .root {
   width: 100%;
@@ -9,7 +21,7 @@
 .tagList {
   display: flex;
   align-items: flex-start;
-  padding: 15px 0 0;
+  padding: 0;
   flex-wrap: wrap;
 
   .tagActive {
@@ -28,12 +40,24 @@
   }
 }
 
+.fontName {
+  font-size: 23px;
+}
 :global {
   .adm-text-area,
   .adm-input-element {
     font-size: 23px;
     font-family: PingFangSC-Regular;
     color: #333;
+  }
+  .adm-action-sheet-extra {
+    font-size: 20px;
+  }
+  .adm-action-sheet-button-item-name{
+    font-size: 23px;
+  }
+  .adm-button.adm-button-shape-rectangular {
+    padding: 10px 0;
   }
   .adm-form-item-label-required {
     display: none;
@@ -91,7 +115,6 @@
   font-size: 36px;
   line-height: 45px;
   color: #333333;
-  font-family: LiSu;
   text-align: center;
   padding: 0;
 }
@@ -103,7 +126,6 @@
 }
 .printAreaA4 {
   display: none;
-  font-family: LiSu;
   color: red;
   visibility: hidden;
 }
@@ -142,18 +164,17 @@
 
 // 210mm×297mm
 .privewAreaA4 {
-  font-family: LiSu;
   width: 100%;
   .a4::after {
     display: block;
     position: absolute;
-    left: -20px;
+    left: 0;
     background-color: #aaa;
     bottom: 0;
     font-size: 12px;
     content: ' ';
-    height: 100%;
-    width: 20px;
+    height: 2px;
+    width: 100%;
     z-index: 2;
   }
   .a4 {
