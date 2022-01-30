@@ -7,7 +7,7 @@ const A4 = {
   h: 297,
 };
 
-const paddingLeft = 20;
+const paddingLeft = 0;
 const baseSize = 100;
 
 const marks = {
@@ -20,36 +20,36 @@ const marks = {
   6: 6,
 };
 
-const defaultMark = 4;
+const defaultMark = 3;
 
 const tagColors = ['primary', 'success', 'warning', 'danger', '#2db7f5', '#87d068', '#108ee9', '#2db7f5'];
 
 const CacheKey = 'PRINT_SETTINGS';
 const SizeKey = 'PRINT_SIZE_SETTINGS';
+const AdjustLevelKey = 'PRINT_ADJUST_SETTINGS';
 
-const firstW = 210;
-const firstH = 297;
+const firstW = 30;
+const firstH = 40;
 
-const defaultTemplate = [`${firstW}*${firstH}`, '60*60', '120*60', '60*120', '70*70'];
-
+const defaultTemplate = ['25*25', '30*30', '30*40', '40*40', '50*40', '110*50', '120*60', '130*70'];
+const MaxTag = 8;
 export default function IndexPage() {
   const [form] = Form.useForm();
 
   const [settings, setSettings] = useState({});
-  const [sizeSettings, setSizeSettings] = useState(defaultTemplate);
+  const [selectTag, setSelectTag] = useState('');
+  const [adjustLevel, setAdjustLevel] = useState(defaultMark);
+  const [sizeSettings, setSizeSettings] = useState(defaultTemplate.slice(0, MaxTag));
 
-  const onValuesChange = (values: any) => {
-    console.log('onValuesChange, ', values);
-    if ('fontVOffset' in values) {
-      calculate({
-        ...settings,
-        fontVOffset: parseInt(values.fontVOffset),
-      });
-    }
+  const onSliderChange = (value: any) => {
+    console.log('onSliderChange, ', value);
+    const level = typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
+    setAdjustLevel(level);
+    localStorage.setItem(AdjustLevelKey, level);
   };
 
-  const calculate = (values: { width: number; height: number; fontVOffset: number; text: string }) => {
-    const { width: ww, height: wh, text, fontVOffset } = values;
+  const calculate = (values: { width: number; height: number; text: string }) => {
+    const { width: ww, height: wh, text } = values;
 
     if (ww > A4.w || wh > A4.h) {
       Toast.show({
@@ -57,6 +57,7 @@ export default function IndexPage() {
         content: '单个文字宽度或高度超过A4纸张尺寸',
       });
     }
+    setSelectTag(`${ww}*${wh}`);
     const width = Math.min(ww, A4.w);
     const height = Math.min(wh, A4.h);
 
@@ -99,13 +100,14 @@ export default function IndexPage() {
       height,
       // 单个汉字的宽度
       renderW,
-      fontVOffset,
       // 单个汉字的高度
       renderH,
       // 实际占用列数
       actualCols,
-      printGap: Math.floor((A4.h - rows * height) / 2),
-      gap: Math.floor((a4H - rows * renderH) / 2),
+      printGap: Math.floor((A4.h - rows * height) / 4),
+      // printGap: 0,
+      // gap: 0,
+      gap: Math.floor((a4H - rows * renderH) / 4),
     };
     setSettings(configuration);
 
@@ -117,9 +119,10 @@ export default function IndexPage() {
     if (Array.isArray(sizeSettings)) {
       if (sizeSettings.indexOf(template) === -1) {
         sizeSettings.unshift(template);
+        if (sizeSettings.length > 8) {
+          sizeSettings.pop();
+        }
       }
-    } else {
-      sizeSettings = [template];
     }
     setSizeSettings([...sizeSettings]);
 
@@ -127,11 +130,12 @@ export default function IndexPage() {
     localStorage.setItem(SizeKey, JSON.stringify(sizeSettings));
   };
 
-  const onFinish = (values: { width: number; height: number; fontVOffset: number; text: string }) => {
+  const onFinish = (values: { width: number; height: number; text: string }) => {
     calculate(values);
   };
 
   const clickTag = (template: string) => {
+    setSelectTag(template);
     const [width, height] = template.split('*');
     form.setFieldsValue({
       width: parseFloat(width),
@@ -142,21 +146,22 @@ export default function IndexPage() {
       ...settings,
       width: parseFloat(width),
       height: parseFloat(height),
-    });
+    } as any);
   };
   useEffect(() => {
     try {
       const configuration = JSON.parse(localStorage.getItem(CacheKey) as string);
       const sizeTemplate = JSON.parse(localStorage.getItem(SizeKey) as string);
+      const adjustLevel = parseInt(localStorage.getItem(AdjustLevelKey) as string);
       console.log('cache: ', configuration);
       setSettings(configuration);
+      setAdjustLevel(isNaN(adjustLevel) ? defaultMark : adjustLevel);
       if (Array.isArray(sizeTemplate)) {
-        setSizeSettings(sizeTemplate);
+        setSizeSettings(sizeTemplate.filter(v => /\d+\*\d+/.test(v)).slice(0, 8));
       }
+      calculate(configuration);
     } catch (e) {}
   }, []);
-
-  const onFinishFailed = (errorInfo: any) => {};
 
   const {
     columns = 0,
@@ -169,7 +174,6 @@ export default function IndexPage() {
     renderW = 0,
     actualCols = 0,
     rows = 0,
-    fontVOffset = 4,
     pageSize = 0,
     text = '',
   } = (settings || {}) as any;
@@ -180,13 +184,13 @@ export default function IndexPage() {
     return pageIdx * sizePerPage + col * rows + row;
   };
 
-  const onPrint = () => {};
-
-  console.log('fontVOffset=', fontVOffset);
   /**
    * 1: 1 --> 210: 297
    * 2: 1 --> 210: 297 / 2
    */
+
+  const [iw, ih] =
+    sizeSettings && sizeSettings[0] ? sizeSettings[0].split('*').map(v => parseFloat(v)) : [firstW, firstH];
   return (
     <div className={styles.root}>
       <div className={styles.settings}>
@@ -194,15 +198,13 @@ export default function IndexPage() {
         <Form
           form={form}
           initialValues={{
-            width: firstW,
-            height: firstH,
-            fontVOffset: defaultMark,
+            width: iw,
+            height: ih,
             text: '故人西辞黄鹤楼',
             // text: '故'
           }}
-          onValuesChange={onValuesChange}
+          // onValuesChange={onValuesChange}
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
           footer={
             <Button block type="submit" color="primary" size="large">
               预&nbsp;&nbsp;览
@@ -232,24 +234,45 @@ export default function IndexPage() {
               placeholder="点击输入要打印的内容"
             />
           </Form.Item>
-
-          <Form.Item name="fontVOffset" label="文字间距微调">
-            <Slider ticks={true} marks={marks} min={0} max={6} />
-          </Form.Item>
         </Form>
 
-        {pageSize && sizeSettings && sizeSettings.length ? (
-          <Form.Item label="快速调节文字宽高">
-            <div className={styles.tagList}>
-              {sizeSettings.slice(0, 8).map((template, idx) => {
-                return (
-                  <Tag key={idx} onClick={() => clickTag(template)} color={tagColors[idx]}>
-                    {template}
-                  </Tag>
-                );
-              })}
-            </div>
+        {pageSize ? (
+          <Form.Item label="文字间距微调">
+            <Slider value={adjustLevel} onChange={onSliderChange} ticks={true} marks={marks} min={0} max={6} />
           </Form.Item>
+        ) : null}
+
+        {pageSize && sizeSettings && sizeSettings.length ? (
+          <>
+            <Form.Item label="快速调节文字宽高">
+              <div className={styles.tagList}>
+                {sizeSettings.slice(0, MaxTag).map((template, idx) => {
+                  return (
+                    <Tag
+                      className={selectTag === template ? styles.tagActive : ''}
+                      key={idx}
+                      onClick={() => clickTag(template)}
+                      color={tagColors[idx]}
+                    >
+                      {template}
+                    </Tag>
+                  );
+                })}
+              </div>
+            </Form.Item>
+            <Form.Item>
+              <Button
+                onClick={() => {
+                  window.print();
+                }}
+                block
+                color="primary"
+                size="large"
+              >
+                打&nbsp;&nbsp;印
+              </Button>
+            </Form.Item>
+          </>
         ) : null}
       </div>
 
@@ -276,7 +299,7 @@ export default function IndexPage() {
                               style={{
                                 fontSize: `${baseSize}px`,
                                 transform: `scale(${renderW / baseSize}, ${
-                                  renderH / baseSize + (fontVOffset / 10) * (renderW / baseSize) * (height / width)
+                                  renderH / baseSize + (adjustLevel / 10) * (renderW / baseSize) * (height / width)
                                 })`,
                               }}
                             >
@@ -297,10 +320,27 @@ export default function IndexPage() {
         </div>
       </div>
 
+      {pageSize > 1 ? (
+        <div className={styles.actionFooter}>
+          <Form.Item>
+            <Button
+              onClick={() => {
+                window.print();
+              }}
+              block
+              color="primary"
+              size="large"
+            >
+              打&nbsp;&nbsp;印
+            </Button>
+          </Form.Item>
+        </div>
+      ) : null}
+
       <div className={styles.printAreaA4}>
         {Array.from({ length: pageSize }).map((_p, pageIdx) => {
           return (
-            <div key={pageIdx} style={{ width: `${A4.w}mm`, height: `${A4.h}mm` }}>
+            <div key={pageIdx} style={{ margin: 0, padding: 0, border: 0, width: `${A4.w}mm`, height: `${A4.h}mm` }}>
               <div style={{ paddingTop: `${printGap}mm` }}>
                 {Array.from({ length: rows }).map((_r, rowIdx) => (
                   <div key={rowIdx} className={styles.row}>
@@ -320,9 +360,7 @@ export default function IndexPage() {
                             style={{
                               display: 'inline-block',
                               fontSize: `${width}mm`,
-                              transform: `${
-                                `scale(1, ${(height /width) + ((fontVOffset / 10) * (height / width))})`
-                              }`,
+                              transform: `${`scale(1, ${height / width + (adjustLevel / 10) * (height / width)})`}`,
                             }}
                           >
                             {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
