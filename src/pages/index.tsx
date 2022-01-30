@@ -304,6 +304,8 @@ export default function IndexPage() {
 
   console.log('iw, ih: ', iw, ih);
 
+  const fontText = fontFamily && fontFamily.key ? fontFamily.key : 'LiSu';
+  const fontCNName = fontFamily && fontFamily.text ? fontFamily.text : '隶书';
   return (
     <div className={styles.root}>
       <div className={styles.settings}>
@@ -311,8 +313,7 @@ export default function IndexPage() {
           <h1
             className={styles.title}
             style={{
-              fontFamily:
-                fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+              fontFamily: fontText,
             }}
           >
             文字打印
@@ -365,18 +366,27 @@ export default function IndexPage() {
             onValuesChange={onValuesChange}
             onFinish={onFinish}
             footer={
-              <Button block type="submit" color="primary" size="large">
-                预览（
-                <span
-                  style={{
-                    fontFamily:
-                      fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
-                  }}
-                >
-                  {fontFamily && fontFamily.text ? fontFamily.text : '隶书'}字体
-                </span>
-                ）
-              </Button>
+              <div>
+                <p style={{ fontSize: '18px', color: '#aaa' }}>
+                  纸张尺寸 210mm * 297mm；
+                  <br />
+                  字体宽{width}mm，一页最多显示{columns}列；
+                  <br />
+                  字体高{width}mm，一页最多显示{rows}行
+                </p>
+                <Button block type="submit" color="primary" size="large">
+                  预览（
+                  <span
+                    style={{
+                      fontFamily: fontText,
+                    }}
+                  >
+                    {fontFamily && fontFamily.text ? fontFamily.text : '隶书'}
+                    字体
+                  </span>
+                  ）
+                </Button>
+              </div>
             }
             autoComplete="off"
           >
@@ -387,7 +397,7 @@ export default function IndexPage() {
             <Form.Item
               name="width"
               label="单字宽度/宽度 5 ~ 210（毫米）"
-              rules={[{ required: true, message: '请输入单个汉字宽度' }]}
+              rules={[{ required: true, message: '请输入宽度' }]}
             >
               <Input
                 type="number"
@@ -400,7 +410,7 @@ export default function IndexPage() {
             <Form.Item
               name="height"
               label="单字高度/高度 5 ~ 297（毫米）"
-              rules={[{ required: true, message: '请输入单个汉字高度' }]}
+              rules={[{ required: true, message: '请输入高度' }]}
             >
               <Input
                 type="number"
@@ -412,7 +422,7 @@ export default function IndexPage() {
             <Form.Item
               label="打印的文字"
               name="text"
-              rules={[{ required: true, message: '请输入要打印的文字' }]}
+              rules={[{ required: true, message: '请输入打印文字' }]}
             >
               <TextArea
                 showCount={(length) => (
@@ -468,8 +478,7 @@ export default function IndexPage() {
           <div
             className={styles.privewAreaA4}
             style={{
-              fontFamily:
-                fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+              fontFamily: fontText,
             }}
           >
             {Array.from({ length: pageSize }).map((_p, pageIdx) => {
@@ -529,7 +538,7 @@ export default function IndexPage() {
         </div>
       )}
 
-      {pageSize > 1 ? (
+      {!textChanged && pageSize > 1 ? (
         <div className={styles.actionFooter}>
           <Form.Item>
             <Button
@@ -549,7 +558,7 @@ export default function IndexPage() {
       <div
         className={styles.printAreaA4}
         style={{
-          fontFamily: fontFamily && fontFamily.key ? fontFamily.key : 'LiSu',
+          fontFamily: fontText,
         }}
       >
         {Array.from({ length: pageSize }).map((_p, pageIdx) => {
@@ -562,8 +571,43 @@ export default function IndexPage() {
                 border: 0,
                 width: `${A4.w}mm`,
                 height: `${A4.h}mm`,
+                position: 'relative',
               }}
             >
+              <p
+                style={{
+                  fontSize: '10mm',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  textAlign: 'right',
+                }}
+              >
+                &nbsp;&nbsp;页码：{pageIdx + 1}/{pageSize}；<br />
+              </p>
+              <p
+                style={{
+                  fontSize: '10mm',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  textAlign: 'right',
+                }}
+              >
+                字间距级别：{adjustLevel}&nbsp;&nbsp;
+              </p>
+              <p
+                style={{
+                  fontSize: '10mm',
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  textAlign: 'center',
+                }}
+              >
+                {fontCNName}：宽{width}mm * 高{height}mm；
+                <br />
+              </p>
               <div style={{ paddingTop: `${printGap}mm` }}>
                 {Array.from({ length: rows }).map((_r, rowIdx) => (
                   <div key={rowIdx} className={styles.row}>
@@ -586,7 +630,7 @@ export default function IndexPage() {
                             style={{
                               display: 'inline-block',
                               fontSize: `${width}mm`,
-                              transform: `${`scale(1, ${
+                              transform: `${`scale(1.1, ${
                                 height / width +
                                 (adjustLevel / 10) * (height / width)
                               })`}`,
