@@ -74,7 +74,7 @@ const basicColumns = [
   { text: '隶书', key: 'LiSu2, LiSu' },
   { text: '魏碑体', key: `WeibeiSC-Bold2, 'Weibei SC'` },
   { text: '楷书', key: `KaiTi2, KaiTi` },
-  { text: '行书', key: `STXingkai, 'Xingkai SC'` },
+  // { text: '行书', key: `STXingkai, 'Xingkai SC'` },
 ];
 
 export default function IndexPage() {
