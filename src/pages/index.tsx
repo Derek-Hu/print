@@ -648,7 +648,6 @@ export default function IndexPage() {
                     max={6}
                   />
                 </Form.Item>
-                ){' '}
               </>
             ) : null}
           </>
