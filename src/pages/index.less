@@ -1,19 +1,19 @@
 @font-face {
-  font-family: 'LiSu';
-  src: url('./lishu.ttf');
+  font-family: 'LiSu2';
+  src: url('/print/lishu.ttf');
 }
 @font-face {
-  font-family: 'KaiTi';
-  src: url('./kaisu.ttf');
+  font-family: 'KaiTi2';
+  src: url('/print/KaiTi_GB2312.ttf');
 }
 @font-face {
-  font-family: 'Weibei SC';
-  src: url('./weibei.ttf');
+  font-family: 'WeibeiSC-Bold2';
+  src: url('/print/classic-weibei.ttf');
 }
-@font-face {
-  font-family: 'STXingkai';
-  src: url('./xingsu.ttf');
-}
+// @font-face {
+//   font-family: 'STXingkai';
+//   src: url('./xingsu.ttf');
+// }
 
 .root {
   width: 100%;
@@ -30,7 +30,7 @@
   }
   :global {
     .adm-tag {
-      margin-right: 10px;
+      margin-right: 5px;
       margin-bottom: 20px;
       line-height: 40px;
       font-size: 20px;
@@ -68,6 +68,12 @@
   .adm-slider-mark {
     font-size: 18px;
     padding-top: 6px;
+  }
+  .adm-radio-content {
+    font-size: 20px;
+  }
+  .adm-radio + .adm-radio {
+    margin-left: 40px;
   }
   .adm-list-item {
     padding-left: 10px;

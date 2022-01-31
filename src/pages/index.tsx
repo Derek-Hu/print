@@ -2,6 +2,7 @@ import {
   TextArea,
   Tag,
   Input,
+  Radio,
   ActionSheet,
   Toast,
   Slider,
@@ -10,6 +11,13 @@ import {
 } from 'antd-mobile';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
+import md5 from 'blueimp-md5';
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/print/sw.js');
+}
+
+const answer = '78ac00cf8aa4bce60d7f1113e32afb70';
 
 const A4 = {
   w: 210,
@@ -63,9 +71,9 @@ const defaultTemplate = [
 const MaxTag = 8;
 
 const basicColumns = [
-  { text: '隶书', key: 'LiSu' },
-  { text: '魏碑体', key: `'Weibei SC','FZWeiBei-S03S'` },
-  { text: '楷书', key: `KaiTi, STKaiti, 'FZKai-Z03S', ` },
+  { text: '隶书', key: 'LiSu2, LiSu' },
+  { text: '魏碑体', key: `WeibeiSC-Bold2, 'Weibei SC'` },
+  { text: '楷书', key: `KaiTi2, KaiTi` },
   { text: '行书', key: `STXingkai, 'Xingkai SC'` },
 ];
 
@@ -89,9 +97,7 @@ export default function IndexPage() {
   };
 
   const onValuesChange = (values: any) => {
-    if ('text' in values) {
-      setTextChanged(true);
-    }
+    setTextChanged(true);
   };
 
   const onAction = (action: any) => {
@@ -101,11 +107,12 @@ export default function IndexPage() {
     localStorage.setItem(FontKey, JSON.stringify(action));
   };
   const calculate = (values: {
+    textDirect: 'l2r' | 't2d';
     width: number;
     height: number;
     text: string;
   }) => {
-    const { width: ww, height: wh, text = '' } = values;
+    const { width: ww, textDirect = 'l2r', height: wh, text = '' } = values;
     if (text == null || text === undefined) {
       return;
     }
@@ -139,7 +146,20 @@ export default function IndexPage() {
     const renderH = Math.floor((a4H * height) / A4.h);
 
     const pageSize = Math.ceil(content.length / (columns * rows));
-    const actualCols = Math.ceil(content.length / rows);
+    const actualCols =
+      textDirect === 't2d'
+        ? Math.ceil(content.length / rows)
+        : Math.min(content.length, columns);
+    const actualRows =
+      textDirect === 't2d'
+        ? Math.min(content.length, rows)
+        : Math.ceil(content.length / columns);
+
+    console.log(`textDirect = ${textDirect}`);
+    console.log(`content.length = ${content.length}`);
+
+    console.log(`actualRows = ${actualRows}`);
+    console.log(`actualCols = ${actualCols}`);
 
     console.log(`总行数rows = ${A4.h}/${height} = ${rows}`);
     console.log(`总列数columns = ${A4.w}/${width} = ${columns}`);
@@ -150,6 +170,7 @@ export default function IndexPage() {
     console.log(`A4 渲染尺寸: ${A4.w}*${A4.h} -> ${renderContainerW} * ${a4H}`);
 
     const configuration = {
+      textDirect,
       a4H,
       // 总行数
       rows,
@@ -167,6 +188,8 @@ export default function IndexPage() {
       renderH,
       // 实际占用列数
       actualCols,
+      // 实际占用行数
+      actualRows,
       printGap: Math.floor((A4.h - rows * height) / 4),
       // printGap: 0,
       // gap: 0,
@@ -195,6 +218,7 @@ export default function IndexPage() {
   };
 
   const onFinish = (values: {
+    textDirect: 'l2r' | 't2d';
     width: number;
     height: number;
     text: string;
@@ -224,6 +248,28 @@ export default function IndexPage() {
       height: parseFloat(height),
     } as any);
   };
+
+  const showPwd = () => {
+    const password = prompt('请输入密码', '');
+
+    if (password) {
+      const repwd = md5(password);
+      console.log(repwd, md5(repwd), answer);
+      if (md5(repwd) === answer) {
+        localStorage.setItem('pwd', repwd);
+        return;
+      }
+    }
+    showPwd();
+  };
+  useEffect(() => {
+    const cachePwd = localStorage.getItem('pwd');
+    if (cachePwd && md5(cachePwd) === answer) {
+      return;
+    }
+    showPwd();
+  }, []);
+
   useEffect(() => {
     try {
       const configuration = JSON.parse(
@@ -249,9 +295,15 @@ export default function IndexPage() {
       console.log('configuration: ', configuration);
       console.log('tag222: ', templates);
       setSizeSettings(templates as any);
-      const { width = 0, text = '', height = 0 } = configuration || {};
+      const {
+        width = 0,
+        text = '',
+        textDirect = 'l2r',
+        height = 0,
+      } = configuration || {};
       form.setFieldsValue({
         text,
+        textDirect,
       });
 
       const tag = `${width}*${height}`;
@@ -279,7 +331,9 @@ export default function IndexPage() {
     width,
     height,
     renderW = 0,
+    textDirect,
     actualCols = 0,
+    actualRows = 0,
     rows = 0,
     pageSize = 0,
     text = '',
@@ -287,8 +341,16 @@ export default function IndexPage() {
 
   const sizePerPage = columns * rows;
 
-  const getTextIndex = (pageIdx: number, row: number, col: number) => {
-    return pageIdx * sizePerPage + col * rows + row;
+  const getTextIndex = (
+    direct: 'l2r' | 't2d',
+    pageIdx: number,
+    row: number,
+    col: number,
+  ) => {
+    if (direct === 't2d') {
+      return pageIdx * sizePerPage + col * rows + row;
+    }
+    return pageIdx * sizePerPage + row * columns + col;
   };
 
   /**
@@ -369,10 +431,18 @@ export default function IndexPage() {
               <div>
                 <p style={{ fontSize: '18px', color: '#aaa' }}>
                   纸张尺寸 210mm * 297mm
-                  <br />
-                  字体宽{width}mm，一页最多显示{columns}列
-                  <br />
-                  字体高{width}mm，一页最多显示{rows}行
+                  {width ? (
+                    <span>
+                      <br />
+                      字体宽{width}mm，一页最多显示{columns}列
+                    </span>
+                  ) : null}
+                  {height ? (
+                    <span>
+                      <br />
+                      字体高{height}mm，一页最多显示{rows}行
+                    </span>
+                  ) : null}
                 </p>
                 <Button block type="submit" color="primary" size="large">
                   预览（
@@ -418,6 +488,12 @@ export default function IndexPage() {
                 max={A4.h}
                 placeholder="最小高度5mm，最大高度297mm"
               />
+            </Form.Item>
+            <Form.Item name="textDirect" label="文字排列方向">
+              <Radio.Group>
+                <Radio value="l2r">从左往右</Radio>
+                <Radio value="t2d">从上往下</Radio>
+              </Radio.Group>
             </Form.Item>
             <Form.Item
               label="打印的文字"
@@ -490,7 +566,13 @@ export default function IndexPage() {
                 >
                   <div style={{ paddingTop: `${gap}px` }}>
                     {Array.from({ length: rows }).map((_r, rowIdx) => (
-                      <div key={rowIdx} className={styles.row}>
+                      <div
+                        key={rowIdx}
+                        className={[
+                          styles.row,
+                          actualRows > rowIdx ? '' : styles.emptyWord,
+                        ].join(' ')}
+                      >
                         {Array.from({ length: columns }).map((_c, colIdx) => {
                           return (
                             <div
@@ -516,8 +598,14 @@ export default function IndexPage() {
                                   })`,
                                 }}
                               >
-                                {text[getTextIndex(pageIdx, rowIdx, colIdx)] ||
-                                  ''}
+                                {text[
+                                  getTextIndex(
+                                    textDirect,
+                                    pageIdx,
+                                    rowIdx,
+                                    colIdx,
+                                  )
+                                ] || ''}
                               </span>
                             </div>
                           );
@@ -576,8 +664,9 @@ export default function IndexPage() {
             >
               <p
                 style={{
-                  fontSize: '10mm',
+                  fontSize: '5mm',
                   position: 'absolute',
+                  fontFamily: '-apple-system, blinkmacsystemfont',
                   top: 0,
                   left: 0,
                   textAlign: 'right',
@@ -587,7 +676,8 @@ export default function IndexPage() {
               </p>
               <p
                 style={{
-                  fontSize: '10mm',
+                  fontSize: '5mm',
+                  fontFamily: '-apple-system, blinkmacsystemfont',
                   position: 'absolute',
                   top: 0,
                   right: 0,
@@ -598,7 +688,8 @@ export default function IndexPage() {
               </p>
               <p
                 style={{
-                  fontSize: '10mm',
+                  fontSize: '5mm',
+                  fontFamily: '-apple-system, blinkmacsystemfont',
                   position: 'absolute',
                   bottom: 0,
                   right: 0,
@@ -610,7 +701,13 @@ export default function IndexPage() {
               </p>
               <div style={{ paddingTop: `${printGap}mm` }}>
                 {Array.from({ length: rows }).map((_r, rowIdx) => (
-                  <div key={rowIdx} className={styles.row}>
+                  <div
+                    key={rowIdx}
+                    className={[
+                      styles.row,
+                      actualRows > rowIdx ? '' : styles.emptyWord,
+                    ].join(' ')}
+                  >
                     {Array.from({ length: columns }).map((_c, colIdx) => {
                       return (
                         <div
@@ -636,7 +733,9 @@ export default function IndexPage() {
                               })`}`,
                             }}
                           >
-                            {text[getTextIndex(pageIdx, rowIdx, colIdx)] || ''}
+                            {text[
+                              getTextIndex(textDirect, pageIdx, rowIdx, colIdx)
+                            ] || ''}
                           </span>
                         </div>
                       );

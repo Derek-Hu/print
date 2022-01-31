@@ -1,8 +1,8 @@
 import { defineConfig } from 'umi';
 
 export default defineConfig({
-  publicPath: process.env.NODE_ENV === 'production' ? '/print/' : '/',
-  base: process.env.NODE_ENV === 'production' ? '/print/' : '/',
+  publicPath: '/print/',
+  base: '/print/',
   runtimePublicPath: true,
   nodeModulesTransform: {
     type: 'none',
