@@ -7,6 +7,7 @@ const appShellFiles = [
   '/print/public/lishu.ttf',
   '/print/public/WeibeiSC-Bold.otf',
   '/print/umi.css',
+  '/print/umi.js'
 ];
 
 const contentToCache = appShellFiles;
