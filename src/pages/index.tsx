@@ -3,6 +3,7 @@ import {
   Tag,
   Input,
   Radio,
+  Switch,
   ActionSheet,
   Toast,
   Slider,
@@ -93,9 +94,12 @@ export default function IndexPage() {
 
   const nextPosDeg = () => {
     const idx = degs.findIndex((item) => item === rotataDeg);
+    console.log('idx: ', idx);
     if (idx + 1 >= degs.length) {
+      console.log('next deg: ', degs[0]);
       return degs[0];
     }
+    console.log('next deg: ', degs[idx + 1]);
     return degs[idx + 1];
   };
 
@@ -372,6 +376,61 @@ export default function IndexPage() {
     return pageIdx * sizePerPage + row * columns + col;
   };
 
+  const getRowStyle = (
+    rowIdx: number,
+    w: number,
+    h: number,
+    unit: 'mm' | 'px',
+  ) => {
+    const offset = Math.abs(w - h) / 2;
+    const offsetStyles =
+      w < h
+        ? rotataDeg === '270'
+          ? { left: `${offset}${unit}` }
+          : rotataDeg === '90'
+          ? { right: `${offset}${unit}` }
+          : {}
+        : {};
+
+    return rotataDeg === '90' || rotataDeg === '270'
+      ? rowIdx === 0
+        ? {
+            position: 'relative',
+            ...offsetStyles,
+            ...(w < h
+              ? { bottom: `${offset}${unit}` }
+              : { top: `${offset}${unit}` }),
+          }
+        : w < h
+        ? {
+            position: 'relative',
+            ...offsetStyles,
+            bottom: `${rowIdx * (h - w) + offset}${unit}`,
+          }
+        : {
+            position: 'relative',
+            ...offsetStyles,
+            bottom: `${offset}${unit}`,
+            top: `${rowIdx * (w - h) + offset}${unit}`,
+          }
+      : {};
+  };
+
+  const getColStyle = (
+    colIdx: number,
+    w: number,
+    h: number,
+    unit: 'mm' | 'px',
+  ) => {
+    return colIdx === 0
+      ? {}
+      : rotataDeg === '90' || rotataDeg === '270'
+      ? w < h
+        ? { position: 'relative', left: `${colIdx * (h - w)}${unit}` }
+        : { position: 'relative', right: `${colIdx * (w - h)}${unit}` }
+      : {};
+  };
+
   /**
    * 1: 1 --> 210: 297
    * 2: 1 --> 210: 297 / 2
@@ -552,10 +611,14 @@ export default function IndexPage() {
             ) : null} */}
             {pageSize ? (
               <>
-                <Form.Item label="文字翻转">
+                <Form.Item
+                  label={`文字旋转：当前(${
+                    rotataDeg === '0' ? '未旋转' : `${rotataDeg}度`
+                  })`}
+                >
                   <span
                     onClick={() => {
-                      setRotateDeg(nextPosDeg());
+                      setRotateDeg(nextNegDeg());
                     }}
                     style={{
                       fontSize: '18px',
@@ -564,17 +627,16 @@ export default function IndexPage() {
                     }}
                   >
                     <UndoOutline fontSize={23} />
-                    顺时针转90度
-                  </span>
-                  {/* <span
-                    onClick={() => {
-                      setRotateDeg(nextNegDeg());
-                    }}
-                    style={{fontSize: '18px'}}
-                  >
-                    <UndoOutline style={{ transform: 'rotateY(180deg)' }} fontSize={23} />
                     逆时针转90度
-                  </span> */}
+                  </span>
+                  {/* <Switch
+                    checked={rotataDeg}
+                    onChange={() => {
+                      setRotateDeg(!rotataDeg);
+                    }}
+                    uncheckedText="关"
+                    checkedText="开"
+                  /> */}
                 </Form.Item>
                 <Form.Item label="文字间距微调">
                   <Slider
@@ -612,59 +674,69 @@ export default function IndexPage() {
                   style={{ height: `${a4H}px` }}
                 >
                   <div style={{ paddingTop: `${gap}px` }}>
-                    {Array.from({ length: rows }).map((_r, rowIdx) => (
-                      <div
-                        key={rowIdx}
-                        className={[
-                          styles.row,
-                          actualRows > rowIdx ? '' : styles.emptyWord,
-                        ].join(' ')}
-                      >
-                        {Array.from({ length: columns }).map((_c, colIdx) => {
-                          return (
-                            <div
-                              key={colIdx}
-                              className={[
-                                styles.col,
-                                actualCols > colIdx ? '' : styles.emptyWord,
-                              ].join(' ')}
-                              style={{
-                                transform: `rotate(${rotataDeg}deg)`,
-                                width: `${renderW}px`,
-                                height: `${renderH}px`,
-                              }}
-                            >
-                              <span
+                    {Array.from({ length: rows }).map((_r, rowIdx) => {
+                      const rowStyle = getRowStyle(
+                        rowIdx,
+                        renderW,
+                        renderH,
+                        'px',
+                      );
+                      return (
+                        <div
+                          key={rowIdx}
+                          style={rowStyle}
+                          className={[
+                            styles.row,
+                            actualRows > rowIdx ? '' : styles.emptyWord,
+                          ].join(' ')}
+                        >
+                          {Array.from({ length: columns }).map((_c, colIdx) => {
+                            const colStyle = getColStyle(
+                              colIdx,
+                              renderW,
+                              renderH,
+                              'px',
+                            );
+                            return (
+                              <div
+                                key={colIdx}
+                                className={[
+                                  styles.col,
+                                  actualCols > colIdx ? '' : styles.emptyWord,
+                                ].join(' ')}
                                 style={{
-                                  fontSize: `${baseSize}px`,
-                                  transform: `scale(${renderW / baseSize}, ${
-                                    renderH / baseSize +
-                                    (adjustLevel / 10) *
-                                      (renderW / baseSize) *
-                                      (height / width)
-                                  })`,
+                                  ...colStyle,
+                                  transform: `rotate(${rotataDeg}deg)`,
+                                  width: `${renderW}px`,
+                                  height: `${renderH}px`,
                                 }}
                               >
-                                {text[
-                                  getTextIndex(
-                                    textDirect,
-                                    pageIdx,
-                                    rowIdx,
-                                    colIdx,
-                                  )
-                                ] || ''}
-                              </span>
-                            </div>
-                          );
-                        })}
-                        <span
-                          className={styles.rowIndex}
-                          style={{ height: `${renderH}px` }}
-                        >
-                          {rowIdx + 1}
-                        </span>
-                      </div>
-                    ))}
+                                <span
+                                  style={{
+                                    fontSize: `${baseSize}px`,
+                                    transform: `scale(${renderW / baseSize}, ${
+                                      renderH / baseSize +
+                                      (adjustLevel / 10) *
+                                        (renderW / baseSize) *
+                                        (height / width)
+                                    })`,
+                                  }}
+                                >
+                                  {text[
+                                    getTextIndex(
+                                      textDirect,
+                                      pageIdx,
+                                      rowIdx,
+                                      colIdx,
+                                    )
+                                  ] || ''}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -746,49 +818,64 @@ export default function IndexPage() {
                 <br />
               </p>
               <div style={{ paddingTop: `${printGap}mm` }}>
-                {Array.from({ length: rows }).map((_r, rowIdx) => (
-                  <div
-                    key={rowIdx}
-                    className={[
-                      styles.row,
-                      actualRows > rowIdx ? '' : styles.emptyWord,
-                    ].join(' ')}
-                  >
-                    {Array.from({ length: columns }).map((_c, colIdx) => {
-                      return (
-                        <div
-                          key={colIdx}
-                          className={[
-                            styles.col,
-                            actualCols > colIdx ? '' : styles.emptyWord,
-                          ].join(' ')}
-                          style={{
-                            // fontSize: `${Math.min(width, height)}mm`,
-                            transform: `rotate(${rotataDeg}deg)`,
-                            width: `${width}mm`,
-                            height: `${height}mm`,
-                            textAlign: 'center',
-                          }}
-                        >
-                          <span
+                {Array.from({ length: rows }).map((_r, rowIdx) => {
+                  const rowStyle = getRowStyle(rowIdx, width, height, 'mm');
+                  return (
+                    <div
+                      key={rowIdx}
+                      style={rowStyle}
+                      className={[
+                        styles.row,
+                        actualRows > rowIdx ? '' : styles.emptyWord,
+                      ].join(' ')}
+                    >
+                      {Array.from({ length: columns }).map((_c, colIdx) => {
+                        const colStyle = getColStyle(
+                          colIdx,
+                          width,
+                          height,
+                          'mm',
+                        );
+                        return (
+                          <div
+                            key={colIdx}
+                            className={[
+                              styles.col,
+                              actualCols > colIdx ? '' : styles.emptyWord,
+                            ].join(' ')}
                             style={{
-                              display: 'inline-block',
-                              fontSize: `${width}mm`,
-                              transform: `${`scale(1.1, ${
-                                height / width +
-                                (adjustLevel / 10) * (height / width)
-                              })`}`,
+                              ...colStyle,
+                              transform: `rotate(${rotataDeg}deg)`,
+                              width: `${width}mm`,
+                              height: `${height}mm`,
+                              textAlign: 'center',
                             }}
                           >
-                            {text[
-                              getTextIndex(textDirect, pageIdx, rowIdx, colIdx)
-                            ] || ''}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                fontSize: `${width}mm`,
+                                transform: `${`scale(1.1, ${
+                                  height / width +
+                                  (adjustLevel / 10) * (height / width)
+                                })`}`,
+                              }}
+                            >
+                              {text[
+                                getTextIndex(
+                                  textDirect,
+                                  pageIdx,
+                                  rowIdx,
+                                  colIdx,
+                                )
+                              ] || ''}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
