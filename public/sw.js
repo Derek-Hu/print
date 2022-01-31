@@ -1,4 +1,3 @@
-self.importScripts('data/games.js');
 
 // Files to cache
 const cacheName = 'js13kPWA-v1';
@@ -9,11 +8,8 @@ const appShellFiles = [
   '/print/public/WeibeiSC-Bold.otf',
   '/print/umi.css',
 ];
-const gamesImages = [];
-for (let i = 0; i < games.length; i++) {
-  gamesImages.push(`data/img/${games[i].slug}.jpg`);
-}
-const contentToCache = appShellFiles.concat(gamesImages);
+
+const contentToCache = appShellFiles;
 
 // Installing Service Worker
 self.addEventListener('install', (e) => {
