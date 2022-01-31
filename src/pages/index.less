@@ -11,6 +11,11 @@
   src: url('/print/classic-weibei.ttf');
 }
 
+.settingsArea {
+  position: relative;
+  z-index: 200;
+  background-color: #fff;
+}
 .root {
   width: 100%;
 }
@@ -95,9 +100,11 @@
     font-size: 22px;
     color: #ffffff;
     text-align: center;
+    height: 49px;
+    line-height: 1;
   }
   .adm-form .adm-form-footer {
-    padding: 16px 10px 32px;
+    padding: 16px 10px;
   }
 }
 
@@ -126,7 +133,7 @@
 
 .kedu {
   position: relative;
-  padding: 0 0 20px 20px;
+  padding: 0 0 75px 20px;
   overflow: hidden;
 }
 .printAreaA4 {
@@ -137,7 +144,6 @@
 .row {
   display: flex;
   align-items: center;
-  justify-content: space-around;
   position: relative;
   .rowIndex {
     position: absolute;
@@ -200,6 +206,13 @@
   margin: 0;
 }
 
+.actionFooter {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: #fff;
+}
 @media print {
   html,
   body {

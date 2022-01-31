@@ -11,6 +11,7 @@ import {
 } from 'antd-mobile';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
+import { UndoOutline } from 'antd-mobile-icons';
 import md5 from 'blueimp-md5';
 
 if ('serviceWorker' in navigator) {
@@ -77,6 +78,7 @@ const basicColumns = [
   // { text: '行书', key: `STXingkai, 'Xingkai  SC'` },
 ];
 
+const degs = ['0', '90', '180', '270'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
@@ -84,9 +86,26 @@ export default function IndexPage() {
   const [fontFamily, setFontFamily] = useState(basicColumns[0]);
   const [settings, setSettings] = useState({});
   const [selectTag, setSelectTag] = useState('');
+  const [rotataDeg, setRotateDeg] = useState('0');
   const [textChanged, setTextChanged] = useState(true);
   const [adjustLevel, setAdjustLevel] = useState(defaultMark);
   const [sizeSettings, setSizeSettings] = useState<string[]>([]);
+
+  const nextPosDeg = () => {
+    const idx = degs.findIndex((item) => item === rotataDeg);
+    if (idx + 1 >= degs.length) {
+      return degs[0];
+    }
+    return degs[idx + 1];
+  };
+
+  const nextNegDeg = () => {
+    const idx = degs.findIndex((item) => item === rotataDeg);
+    if (idx === 0) {
+      return degs[degs.length - 1];
+    }
+    return degs[idx - 1];
+  };
 
   const onSliderChange = (value: any) => {
     console.log('onSliderChange, ', value);
@@ -371,7 +390,7 @@ export default function IndexPage() {
   return (
     <div className={styles.root}>
       <div className={styles.settings}>
-        <div id="settingsArea">
+        <div id="settingsArea" className={styles.settingsArea}>
           <h1
             className={styles.title}
             style={{
@@ -429,21 +448,6 @@ export default function IndexPage() {
             onFinish={onFinish}
             footer={
               <div>
-                <p style={{ fontSize: '18px', color: '#aaa' }}>
-                  纸张尺寸 210mm * 297mm
-                  {width ? (
-                    <span>
-                      <br />
-                      字体宽{width}mm，一页最多显示{columns}列
-                    </span>
-                  ) : null}
-                  {height ? (
-                    <span>
-                      <br />
-                      字体高{height}mm，一页最多显示{rows}行
-                    </span>
-                  ) : null}
-                </p>
                 <Button block type="submit" color="primary" size="large">
                   预览（
                   <span
@@ -489,6 +493,23 @@ export default function IndexPage() {
                 placeholder="最小高度5mm，最大高度297mm"
               />
             </Form.Item>
+            <Form.Item>
+              <p style={{ marginBottom: 0, fontSize: '18px', color: '#aaa' }}>
+                纸张尺寸 210mm * 297mm
+                {width ? (
+                  <span>
+                    <br />
+                    字体宽{width}mm，一行最多显示{columns}个字
+                  </span>
+                ) : null}
+                {height ? (
+                  <span>
+                    <br />
+                    字体高{height}mm，一页最多显示{rows}行
+                  </span>
+                ) : null}
+              </p>
+            </Form.Item>
             <Form.Item name="textDirect" label="文字排列方向">
               <Radio.Group>
                 <Radio value="l2r">从左往右</Radio>
@@ -515,7 +536,7 @@ export default function IndexPage() {
 
         {textChanged ? null : (
           <>
-            {pageSize ? (
+            {/* {pageSize ? (
               <Form.Item>
                 <Button
                   onClick={() => {
@@ -528,19 +549,45 @@ export default function IndexPage() {
                   打印全部（共{pageSize}页）
                 </Button>
               </Form.Item>
-            ) : null}
-
+            ) : null} */}
             {pageSize ? (
-              <Form.Item label="文字间距微调">
-                <Slider
-                  value={adjustLevel}
-                  onChange={onSliderChange}
-                  ticks={true}
-                  marks={marks}
-                  min={0}
-                  max={6}
-                />
-              </Form.Item>
+              <>
+                <Form.Item label="文字翻转">
+                  <span
+                    onClick={() => {
+                      setRotateDeg(nextPosDeg());
+                    }}
+                    style={{
+                      fontSize: '18px',
+                      display: 'inline-block',
+                      marginRight: '20px',
+                    }}
+                  >
+                    <UndoOutline fontSize={23} />
+                    顺时针转90度
+                  </span>
+                  {/* <span
+                    onClick={() => {
+                      setRotateDeg(nextNegDeg());
+                    }}
+                    style={{fontSize: '18px'}}
+                  >
+                    <UndoOutline style={{ transform: 'rotateY(180deg)' }} fontSize={23} />
+                    逆时针转90度
+                  </span> */}
+                </Form.Item>
+                <Form.Item label="文字间距微调">
+                  <Slider
+                    value={adjustLevel}
+                    onChange={onSliderChange}
+                    ticks={true}
+                    marks={marks}
+                    min={0}
+                    max={6}
+                  />
+                </Form.Item>
+                ){' '}
+              </>
             ) : null}
           </>
         )}
@@ -582,7 +629,7 @@ export default function IndexPage() {
                                 actualCols > colIdx ? '' : styles.emptyWord,
                               ].join(' ')}
                               style={{
-                                // fontSize: `${Math.min(renderW, renderH)}px`,
+                                transform: `rotate(${rotataDeg}deg)`,
                                 width: `${renderW}px`,
                                 height: `${renderH}px`,
                               }}
@@ -623,25 +670,24 @@ export default function IndexPage() {
               );
             })}
           </div>
+          {!textChanged && pageSize ? (
+            <div className={styles.actionFooter}>
+              <Form.Item>
+                <Button
+                  onClick={() => {
+                    window.print();
+                  }}
+                  block
+                  color="primary"
+                  size="large"
+                >
+                  打印全部（共{pageSize}页）
+                </Button>
+              </Form.Item>
+            </div>
+          ) : null}
         </div>
       )}
-
-      {!textChanged && pageSize > 1 ? (
-        <div className={styles.actionFooter}>
-          <Form.Item>
-            <Button
-              onClick={() => {
-                window.print();
-              }}
-              block
-              color="primary"
-              size="large"
-            >
-              打印全部（共{pageSize}页）
-            </Button>
-          </Form.Item>
-        </div>
-      ) : null}
 
       <div
         className={styles.printAreaA4}
@@ -718,6 +764,7 @@ export default function IndexPage() {
                           ].join(' ')}
                           style={{
                             // fontSize: `${Math.min(width, height)}mm`,
+                            transform: `rotate(${rotataDeg}deg)`,
                             width: `${width}mm`,
                             height: `${height}mm`,
                             textAlign: 'center',
