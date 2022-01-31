@@ -854,7 +854,7 @@ export default function IndexPage() {
                               style={{
                                 display: 'inline-block',
                                 fontSize: `${width}mm`,
-                                transform: `${`scale(1.1, ${
+                                transform: `${`scale(1.05, ${
                                   height / width +
                                   (adjustLevel / 10) * (height / width)
                                 })`}`,
