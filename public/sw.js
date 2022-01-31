@@ -3,9 +3,9 @@
 const cacheName = 'js13kPWA-v1';
 
 const appShellFiles = [
-  '/print/public/Kaiti.ttc',
   '/print/public/lishu.ttf',
-  '/print/public/WeibeiSC-Bold.otf',
+  '/print/classic-weibei.ttf',
+  '/print/KaiTi_GB2312.ttf',
   '/print/umi.css',
   '/print/umi.js'
 ];
