@@ -6,7 +6,7 @@
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
     "test": "umi-test",
-    "deploy": "gh-pages -d dist",
+    "deploy": "git config --global user.email \"you@example.com\" && git config --global user.name \"benlv\" && gh-pages -d dist",
     "test:coverage": "umi-test --coverage"
   },
   "gitHooks": {
