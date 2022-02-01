@@ -38,7 +38,7 @@ const marks = {
   6: 6,
 };
 
-const defaultMark = 3;
+const defaultMark = 1;
 
 const tagColors = [
   'primary',
@@ -445,6 +445,7 @@ export default function IndexPage() {
 
   const fontText = fontFamily && fontFamily.key ? fontFamily.key : 'LiSu';
   const fontCNName = fontFamily && fontFamily.text ? fontFamily.text : '隶书';
+  const fontWeight = fontCNName === '楷书' ? 'bold' : 'normal';
 
   const inputW = form.getFieldValue('width');
   const inputH = form.getFieldValue('height');
@@ -663,6 +664,7 @@ export default function IndexPage() {
             className={styles.privewAreaA4}
             style={{
               fontFamily: fontText,
+              fontWeight,
             }}
           >
             {Array.from({ length: pageSize }).map((_p, pageIdx) => {
@@ -764,6 +766,7 @@ export default function IndexPage() {
         className={styles.printAreaA4}
         style={{
           fontFamily: fontText,
+          fontWeight,
         }}
       >
         {Array.from({ length: pageSize }).map((_p, pageIdx) => {
