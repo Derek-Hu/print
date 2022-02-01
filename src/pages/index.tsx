@@ -556,8 +556,10 @@ export default function IndexPage() {
             <Form.Item dependencies={['width', 'height']}>
               {({ getFieldValue }) => {
                 console.log('getFieldValue', getFieldValue('width'));
-                const rSize = Math.floor(A4.w / getFieldValue('width'));
-                const cSize = Math.floor(A4.h / getFieldValue('height'));
+                const inputW = getFieldValue('width');
+                const inputH = getFieldValue('height');
+                const rSize = Math.floor(A4.w / inputW);
+                const cSize = Math.floor(A4.h / inputH);
 
                 const rText = !isNaN(rSize) && isFinite(rSize);
                 const cText = !isNaN(cSize) && isFinite(cSize);
@@ -566,18 +568,16 @@ export default function IndexPage() {
                     style={{ marginBottom: 0, fontSize: '18px', color: '#aaa' }}
                   >
                     纸张尺寸 {A4.w}mm * {A4.h}mm
-                    {width ? (
+                    {rText ? (
                       <span>
                         <br />
-                        字体宽{width}mm
-                        {rText ? `，一行最多显示${rSize || 1}个字` : ''}
+                        字体宽{inputW}mm，一行最多显示{rSize || 1}个字
                       </span>
                     ) : null}
-                    {height ? (
+                    {cText ? (
                       <span>
                         <br />
-                        字体高{height}mm
-                        {cText ? `，一页最多显示${cSize || 1}行` : ''}
+                        字体高{inputH}mm，一页最多显示{cSize || 1}行
                       </span>
                     ) : null}
                   </p>
