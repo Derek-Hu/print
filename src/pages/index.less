@@ -17,6 +17,17 @@
 }
 .root {
   width: 100%;
+  -webkit-touch-callout: none; /* iOS Safari */
+
+  -webkit-user-select: none; /* Chrome/Safari/Opera */
+
+  -khtml-user-select: none; /* Konqueror */
+
+  -moz-user-select: none; /* Firefox */
+
+  -ms-user-select: none; /* Internet Explorer/Edge */
+
+  user-select: none;
 }
 .tagList {
   display: flex;
@@ -31,9 +42,9 @@
   :global {
     .adm-tag {
       margin-right: 5px;
-      margin-bottom: 20px;
-      line-height: 40px;
-      font-size: 20px;
+      margin-bottom: 10px;
+      line-height: 32px;
+      font-size: 18px;
       display: inline-block;
       padding: 0 15px;
     }
@@ -41,15 +52,18 @@
 }
 
 .fontName {
-  font-size: 23px;
+  font-size: 20px;
 }
 :global {
+  .adm-list-item-content-main {
+    padding: 6px 0;
+  }
   .adm-slider-track-container {
-    padding: 12px 0;
+    padding: 18px 0;
   }
   .adm-text-area,
   .adm-input-element {
-    font-size: 23px;
+    font-size: 20px;
     font-family: PingFangSC-Regular;
     color: #333;
   }
@@ -65,8 +79,12 @@
   .adm-form-item-label-required {
     display: none;
   }
+  .adm-slider {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
   .adm-slider-mark {
-    font-size: 18px;
+    font-size: 15px;
     padding-top: 6px;
   }
   .adm-radio-content {
@@ -84,10 +102,10 @@
   .adm-form-vertical .adm-form-item-label,
   .adm-form-item-label {
     font-family: PingFangSC-Regular;
-    font-size: 20px;
+    font-size: 18px;
     color: #999;
-    line-height: 24px;
-    margin-bottom: 12px;
+    line-height: 20px;
+    margin-bottom: 8px;
   }
 
   .adm-form-item-footer {
@@ -103,7 +121,7 @@
     line-height: 1;
   }
   .adm-form .adm-form-footer {
-    padding: 16px 10px;
+    padding: 10px 10px;
   }
 }
 
@@ -126,8 +144,8 @@
   color: #969696;
   background-color: #f4f7fa;
   margin: 0;
-  font-size: 36px;
-  line-height: 45px;
+  font-size: 26px;
+  line-height: 36px;
   color: #333333;
   text-align: center;
   padding: 0;

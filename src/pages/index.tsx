@@ -602,7 +602,7 @@ export default function IndexPage() {
                 const cText = !isNaN(cSize) && isFinite(cSize);
                 return (
                   <p
-                    style={{ marginBottom: 0, fontSize: '18px', color: '#aaa' }}
+                    style={{ marginBottom: 0, fontSize: '16px', color: '#aaa' }}
                   >
                     纸张尺寸 {A4.w}mm * {A4.h}mm
                     {rText ? (
@@ -676,35 +676,38 @@ export default function IndexPage() {
                     逆时针转90度
                   </span>
                 </Form.Item>
-                <Form.Item label="文字高度微调">
+                <Form.Item
+                  label={`文字高度微调${
+                    adjustLevel ? `(+${adjustLevel})` : ''
+                  }`}
+                >
                   <Slider
                     value={adjustLevel}
                     onChange={onSliderChange}
                     ticks={true}
-                    marks={marks}
                     min={0}
                     max={6}
                   />
                 </Form.Item>
                 <Form.Item
-                  label={`上下间距${rowSpaceGap ? `(+${rowSpaceGap}mm)` : ''}`}
+                  label={`上下间距${rowSpaceGap ? `(${rowSpaceGap}mm)` : ''}`}
                 >
                   <Slider
                     style={{ '--fill-color': '#00b578' }}
                     value={rowSpaceGap}
                     onChange={onRowSpaceChange}
-                    min={0}
+                    min={-Math.min(width, height) / 2}
                     max={Math.max(width, height)}
                   />
                 </Form.Item>
                 <Form.Item
-                  label={`左右间距${colSpaceGap ? `(+${colSpaceGap}mm)` : ''}`}
+                  label={`左右间距${colSpaceGap ? `(${colSpaceGap}mm)` : ''}`}
                 >
                   <Slider
                     style={{ '--fill-color': '#ff8f1f' }}
                     value={colSpaceGap}
                     onChange={onColSpaceChange}
-                    min={0}
+                    min={-Math.min(width, height) / 2}
                     max={Math.max(width, height)}
                   />
                 </Form.Item>
@@ -863,8 +866,9 @@ export default function IndexPage() {
                   textAlign: 'center',
                 }}
               >
-                {fontCNName}：宽{width}mm * 高{height}mm；+ 字间距级别：
-                {adjustLevel}
+                {fontCNName}：宽{width}mm * 高{height}mm；+ 文字高度微调：
+                {adjustLevel}(上下间距：{rowSpaceGap}mm，左右间距{colSpaceGap}
+                mm)
                 <br />
               </p>
               <div style={{ paddingTop: `${printGap}mm` }}>
