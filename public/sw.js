@@ -1,5 +1,5 @@
 // Files to cache
-const cacheName = 'js13kPWA-v5';
+const cacheName = 'js13kPWA-v6';
 
 const appShellFiles = [
   '/print/lishu.ttf',
