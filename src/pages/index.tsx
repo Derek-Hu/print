@@ -298,13 +298,13 @@ export default function IndexPage() {
   const onRowSpaceChange = (value: any) => {
     const level =
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
-    setRowSpaceGap(level);
+    setRowSpaceGap(level / 10);
   };
 
   const onColSpaceChange = (value: any) => {
     const level =
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
-    setColSpaceGap(level);
+    setColSpaceGap(level / 10);
   };
   useEffect(() => {
     try {
@@ -691,24 +691,44 @@ export default function IndexPage() {
                 </Form.Item>
                 <Form.Item
                   label={`上下间距${rowSpaceGap ? `(${rowSpaceGap}mm)` : ''}`}
+                  extra={
+                    <Button
+                      color="warning"
+                      onClick={() => {
+                        setRowSpaceGap(0);
+                      }}
+                    >
+                      设置为0
+                    </Button>
+                  }
                 >
                   <Slider
                     style={{ '--fill-color': '#00b578' }}
-                    value={rowSpaceGap}
+                    value={rowSpaceGap * 10}
                     onChange={onRowSpaceChange}
-                    min={-Math.min(width, height) / 2}
-                    max={Math.max(width, height)}
+                    min={-Math.min(width, height) * 5}
+                    max={Math.max(width, height) * 10}
                   />
                 </Form.Item>
                 <Form.Item
+                  extra={
+                    <Button
+                      color="warning"
+                      onClick={() => {
+                        setColSpaceGap(0);
+                      }}
+                    >
+                      设置为0
+                    </Button>
+                  }
                   label={`左右间距${colSpaceGap ? `(${colSpaceGap}mm)` : ''}`}
                 >
                   <Slider
                     style={{ '--fill-color': '#ff8f1f' }}
-                    value={colSpaceGap}
+                    value={colSpaceGap * 10}
                     onChange={onColSpaceChange}
-                    min={-Math.min(width, height) / 2}
-                    max={Math.max(width, height)}
+                    min={-Math.min(width, height) * 5}
+                    max={Math.max(width, height) * 10}
                   />
                 </Form.Item>
               </>
