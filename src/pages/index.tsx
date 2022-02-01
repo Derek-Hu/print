@@ -3,7 +3,6 @@ import {
   Tag,
   Input,
   Radio,
-  Switch,
   ActionSheet,
   Toast,
   Slider,
@@ -79,7 +78,7 @@ const basicColumns = [
   // { text: '行书', key: `STXingkai, 'Xingkai  SC'` },
 ];
 
-const degs = ['0', '90', '180', '270'];
+const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
@@ -446,6 +445,13 @@ export default function IndexPage() {
 
   const fontText = fontFamily && fontFamily.key ? fontFamily.key : 'LiSu';
   const fontCNName = fontFamily && fontFamily.text ? fontFamily.text : '隶书';
+
+  const inputW = form.getFieldValue('width');
+  const inputH = form.getFieldValue('height');
+
+  console.log('inputW: ', inputW);
+  console.log('inputH: ', inputH);
+
   return (
     <div className={styles.root}>
       <div className={styles.settings}>
@@ -501,7 +507,6 @@ export default function IndexPage() {
               width: iw,
               height: ih,
               text: '',
-              // text: '故'
             }}
             onValuesChange={onValuesChange}
             onFinish={onFinish}
@@ -523,10 +528,6 @@ export default function IndexPage() {
             }
             autoComplete="off"
           >
-            {/* <Form.Item name="font" label="字体">
-              <Picker columns={basicColumns} />
-            </Form.Item> */}
-
             <Form.Item
               name="width"
               label="单字宽度/宽度 5 ~ 210（毫米）"
@@ -552,22 +553,36 @@ export default function IndexPage() {
                 placeholder="最小高度5mm，最大高度297mm"
               />
             </Form.Item>
-            <Form.Item>
-              <p style={{ marginBottom: 0, fontSize: '18px', color: '#aaa' }}>
-                纸张尺寸 210mm * 297mm
-                {width ? (
-                  <span>
-                    <br />
-                    字体宽{width}mm，一行最多显示{columns}个字
-                  </span>
-                ) : null}
-                {height ? (
-                  <span>
-                    <br />
-                    字体高{height}mm，一页最多显示{rows}行
-                  </span>
-                ) : null}
-              </p>
+            <Form.Item dependencies={['width', 'height']}>
+              {({ getFieldValue }) => {
+                console.log('getFieldValue', getFieldValue('width'));
+                const rSize = Math.floor(A4.w / getFieldValue('width'));
+                const cSize = Math.floor(A4.h / getFieldValue('height'));
+
+                const rText = !isNaN(rSize) && isFinite(rSize);
+                const cText = !isNaN(cSize) && isFinite(cSize);
+                return (
+                  <p
+                    style={{ marginBottom: 0, fontSize: '18px', color: '#aaa' }}
+                  >
+                    纸张尺寸 {A4.w}mm * {A4.h}mm
+                    {width ? (
+                      <span>
+                        <br />
+                        字体宽{width}mm
+                        {rText ? `，一行最多显示${rSize || 1}个字` : ''}
+                      </span>
+                    ) : null}
+                    {height ? (
+                      <span>
+                        <br />
+                        字体高{height}mm
+                        {cText ? `，一页最多显示${cSize || 1}行` : ''}
+                      </span>
+                    ) : null}
+                  </p>
+                );
+              }}
             </Form.Item>
             <Form.Item name="textDirect" label="文字排列方向">
               <Radio.Group>
@@ -595,20 +610,6 @@ export default function IndexPage() {
 
         {textChanged ? null : (
           <>
-            {/* {pageSize ? (
-              <Form.Item>
-                <Button
-                  onClick={() => {
-                    window.print();
-                  }}
-                  block
-                  color="primary"
-                  size="large"
-                >
-                  打印全部（共{pageSize}页）
-                </Button>
-              </Form.Item>
-            ) : null} */}
             {pageSize ? (
               <>
                 <Form.Item
@@ -626,17 +627,16 @@ export default function IndexPage() {
                       marginRight: '20px',
                     }}
                   >
-                    <UndoOutline fontSize={23} />
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        transform: 'rotateY(180deg)',
+                      }}
+                    >
+                      <UndoOutline fontSize={23} />
+                    </span>
                     逆时针转90度
                   </span>
-                  {/* <Switch
-                    checked={rotataDeg}
-                    onChange={() => {
-                      setRotateDeg(!rotataDeg);
-                    }}
-                    uncheckedText="关"
-                    checkedText="开"
-                  /> */}
                 </Form.Item>
                 <Form.Item label="文字间距微调">
                   <Slider
