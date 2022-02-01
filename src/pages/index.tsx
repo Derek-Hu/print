@@ -82,6 +82,9 @@ const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
+  const [rowSpaceGap, setRowSpaceGap] = useState(0);
+  const [colSpaceGap, setColSpaceGap] = useState(0);
+
   const [fontSheetVisible, setFontSheetVisible] = useState(false);
   const [fontFamily, setFontFamily] = useState(basicColumns[0]);
   const [settings, setSettings] = useState({});
@@ -292,6 +295,17 @@ export default function IndexPage() {
     showPwd();
   }, []);
 
+  const onRowSpaceChange = (value: any) => {
+    const level =
+      typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
+    setRowSpaceGap(level);
+  };
+
+  const onColSpaceChange = (value: any) => {
+    const level =
+      typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
+    setColSpaceGap(level);
+  };
   useEffect(() => {
     try {
       const configuration = JSON.parse(
@@ -375,6 +389,26 @@ export default function IndexPage() {
     return pageIdx * sizePerPage + row * columns + col;
   };
 
+  const getOffsetStyles = (
+    rowIdx: number,
+    w: number,
+    h: number,
+    unit: string,
+  ) => {
+    const offset = Math.abs(w - h) / 2;
+
+    if (rotataDeg === '90') {
+      if (w < h) {
+        return { right: `${offset}${unit}` };
+      }
+    }
+    if (rotataDeg === '270') {
+      if (w < h) {
+        return { left: `${offset}${unit}` };
+      }
+    }
+    return {};
+  };
   const getRowStyle = (
     rowIdx: number,
     w: number,
@@ -382,37 +416,34 @@ export default function IndexPage() {
     unit: 'mm' | 'px',
   ) => {
     const offset = Math.abs(w - h) / 2;
-    const offsetStyles =
-      w < h
-        ? rotataDeg === '270'
-          ? { left: `${offset}${unit}` }
-          : rotataDeg === '90'
-          ? { right: `${offset}${unit}` }
-          : {}
-        : {};
+    const offsetStyles = getOffsetStyles(rowIdx, w, h, unit);
 
-    return rotataDeg === '90' || rotataDeg === '270'
-      ? rowIdx === 0
+    const rowGapMargin = rowIdx * rowSpaceGap;
+    if (rotataDeg === '0' || rotataDeg === '180') {
+      return {
+        top: `${rowGapMargin}mm`,
+      };
+    }
+    if (rotataDeg === '90' || rotataDeg === '270') {
+      return rowIdx === 0
         ? {
-            position: 'relative',
             ...offsetStyles,
             ...(w < h
-              ? { bottom: `${offset}${unit}` }
-              : { top: `${offset}${unit}` }),
+              ? { top: `${rowGapMargin}mm`, bottom: `${offset}${unit}` }
+              : { top: `${offset + rowGapMargin}${unit}` }),
           }
         : w < h
         ? {
-            position: 'relative',
             ...offsetStyles,
+            top: `${rowGapMargin}mm`,
             bottom: `${rowIdx * (h - w) + offset}${unit}`,
           }
         : {
-            position: 'relative',
             ...offsetStyles,
             bottom: `${offset}${unit}`,
-            top: `${rowIdx * (w - h) + offset}${unit}`,
-          }
-      : {};
+            top: `${rowIdx * (w - h) + rowGapMargin + offset}${unit}`,
+          };
+    }
   };
 
   const getColStyle = (
@@ -421,13 +452,18 @@ export default function IndexPage() {
     h: number,
     unit: 'mm' | 'px',
   ) => {
+    const colGapMargin = colIdx * colSpaceGap;
     return colIdx === 0
-      ? {}
+      ? {
+          left: `${colGapMargin}mm`,
+        }
       : rotataDeg === '90' || rotataDeg === '270'
       ? w < h
-        ? { position: 'relative', left: `${colIdx * (h - w)}${unit}` }
-        : { position: 'relative', right: `${colIdx * (w - h)}${unit}` }
-      : {};
+        ? { left: `${colGapMargin + colIdx * (h - w)}${unit}` }
+        : { left: `${colGapMargin}mm`, right: `${colIdx * (w - h)}${unit}` }
+      : {
+          left: `${colGapMargin}mm`,
+        };
   };
 
   /**
@@ -597,6 +633,7 @@ export default function IndexPage() {
               rules={[{ required: true, message: '请输入打印文字' }]}
             >
               <TextArea
+                autoSize={true}
                 showCount={(length) => (
                   <span className={styles.count}>
                     字数统计：共 {length} 个字
@@ -639,7 +676,7 @@ export default function IndexPage() {
                     逆时针转90度
                   </span>
                 </Form.Item>
-                <Form.Item label="文字间距微调">
+                <Form.Item label="文字高度微调">
                   <Slider
                     value={adjustLevel}
                     onChange={onSliderChange}
@@ -647,6 +684,28 @@ export default function IndexPage() {
                     marks={marks}
                     min={0}
                     max={6}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label={`上下间距${rowSpaceGap ? `(+${rowSpaceGap}mm)` : ''}`}
+                >
+                  <Slider
+                    style={{ '--fill-color': '#00b578' }}
+                    value={rowSpaceGap}
+                    onChange={onRowSpaceChange}
+                    min={0}
+                    max={Math.max(width, height)}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label={`左右间距${colSpaceGap ? `(+${colSpaceGap}mm)` : ''}`}
+                >
+                  <Slider
+                    style={{ '--fill-color': '#ff8f1f' }}
+                    value={colSpaceGap}
+                    onChange={onColSpaceChange}
+                    min={0}
+                    max={Math.max(width, height)}
                   />
                 </Form.Item>
               </>
@@ -799,24 +858,13 @@ export default function IndexPage() {
                   fontSize: '5mm',
                   fontFamily: '-apple-system, blinkmacsystemfont',
                   position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  textAlign: 'right',
-                }}
-              >
-                字间距级别：{adjustLevel}&nbsp;&nbsp;
-              </p>
-              <p
-                style={{
-                  fontSize: '5mm',
-                  fontFamily: '-apple-system, blinkmacsystemfont',
-                  position: 'absolute',
                   bottom: 0,
                   right: 0,
                   textAlign: 'center',
                 }}
               >
-                {fontCNName}：宽{width}mm * 高{height}mm；
+                {fontCNName}：宽{width}mm * 高{height}mm；+ 字间距级别：
+                {adjustLevel}
                 <br />
               </p>
               <div style={{ paddingTop: `${printGap}mm` }}>
