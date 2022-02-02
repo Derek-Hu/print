@@ -447,7 +447,7 @@ export default function IndexPage() {
     const rowGapMargin = rowIdx * rowSpaceGap;
     if (rotataDeg === '0' || rotataDeg === '180') {
       return {
-        top: `${rowGapMargin}mm`,
+        top: `${rowGapMargin}${unit}`,
       };
     }
     if (rotataDeg === '90' || rotataDeg === '270') {
@@ -455,13 +455,13 @@ export default function IndexPage() {
         ? {
             ...offsetStyles,
             ...(w < h
-              ? { top: `${rowGapMargin}mm`, bottom: `${offset}${unit}` }
+              ? { top: `${rowGapMargin}${unit}`, bottom: `${offset}${unit}` }
               : { top: `${offset + rowGapMargin}${unit}` }),
           }
         : w < h
         ? {
             ...offsetStyles,
-            top: `${rowGapMargin}mm`,
+            top: `${rowGapMargin}${unit}`,
             bottom: `${rowIdx * (h - w) + offset}${unit}`,
           }
         : {
@@ -481,14 +481,17 @@ export default function IndexPage() {
     const colGapMargin = colIdx * colSpaceGap;
     return colIdx === 0
       ? {
-          left: `${colGapMargin}mm`,
+          left: `${colGapMargin}${unit}`,
         }
       : rotataDeg === '90' || rotataDeg === '270'
       ? w < h
         ? { left: `${colGapMargin + colIdx * (h - w)}${unit}` }
-        : { left: `${colGapMargin}mm`, right: `${colIdx * (w - h)}${unit}` }
+        : {
+            left: `${colGapMargin}${unit}`,
+            right: `${colIdx * (w - h)}${unit}`,
+          }
       : {
-          left: `${colGapMargin}mm`,
+          left: `${colGapMargin}${unit}`,
         };
   };
 
