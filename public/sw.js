@@ -37,7 +37,9 @@ self.addEventListener('fetch', (e) => {
       const r = await caches.match(e.request);
       console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
       if (r) {
-        updateLatest();
+        if (/umi\.css/.test(e.request) || /umi\.js/.test(e.request)) {
+          updateLatest();
+        }
         return r;
       }
       return updateLatest();
