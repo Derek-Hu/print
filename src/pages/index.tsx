@@ -78,6 +78,27 @@ const basicColumns = [
   // { text: '行书', key: `STXingkai, 'Xingkai  SC'` },
 ];
 
+const getFormattedText = (
+  cols: number,
+  rows: number,
+  direction: 't2d' | 'l2r',
+  content: string,
+) => {
+  const maxLen = direction === 't2d' ? rows : cols;
+  if (typeof content === 'string') {
+    const chars = content.split(/\n/);
+    chars.forEach((item, idx) => {
+      const fill = maxLen - (item.length % maxLen);
+      if (fill) {
+        chars[idx] = `${item}${Array.from({ length: fill })
+          .map((v) => ' ')
+          .join('')}`;
+      }
+    });
+    return chars.join('');
+  }
+  return '';
+};
 const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
@@ -141,9 +162,9 @@ export default function IndexPage() {
     if (text == null || text === undefined) {
       return;
     }
-    const content = String.prototype.trim.call(text);
+    const originalText = String.prototype.trim.call(text);
 
-    if (content === '') {
+    if (originalText === '') {
       return;
     }
     setTextChanged(false);
@@ -170,6 +191,15 @@ export default function IndexPage() {
     // height/ 297 = y / a4H
     const renderH = Math.floor((a4H * height) / A4.h);
 
+    console.log('content: ', originalText);
+    console.log(`总行数rows = ${A4.h}/${height} = ${rows}`);
+    console.log(`总列数columns = ${A4.w}/${width} = ${columns}`);
+    console.log(`textDirect = ${textDirect}`);
+
+    const content = getFormattedText(columns, rows, textDirect, originalText);
+    console.log('formattedText before', originalText);
+    console.log('formattedText after', content);
+
     const pageSize = Math.ceil(content.length / (columns * rows));
     const actualCols =
       textDirect === 't2d'
@@ -180,14 +210,10 @@ export default function IndexPage() {
         ? Math.min(content.length, rows)
         : Math.ceil(content.length / columns);
 
-    console.log(`textDirect = ${textDirect}`);
     console.log(`content.length = ${content.length}`);
 
     console.log(`actualRows = ${actualRows}`);
     console.log(`actualCols = ${actualCols}`);
-
-    console.log(`总行数rows = ${A4.h}/${height} = ${rows}`);
-    console.log(`总列数columns = ${A4.w}/${width} = ${columns}`);
 
     console.log(`汉字渲染宽度renderW = ${renderW}`);
     console.log(`汉字渲染高度renderH = ${renderH}`);
