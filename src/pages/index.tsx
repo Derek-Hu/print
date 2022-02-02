@@ -677,9 +677,26 @@ export default function IndexPage() {
             {pageSize ? (
               <>
                 <Form.Item
-                  label={`文字旋转：当前(${
-                    rotataDeg === '0' ? '未旋转' : `${rotataDeg}度`
-                  })`}
+                  label={
+                    <span>
+                      文字旋转
+                      {rotataDeg === '0' ? (
+                        ''
+                      ) : (
+                        <span style={{ color: 'red' }}>({rotataDeg}度)</span>
+                      )}
+                    </span>
+                  }
+                  extra={
+                    <Button
+                      color="warning"
+                      onClick={() => {
+                        setRotateDeg('0');
+                      }}
+                    >
+                      &nbsp;不旋转&nbsp;
+                    </Button>
+                  }
                 >
                   <span
                     onClick={() => {
@@ -703,9 +720,24 @@ export default function IndexPage() {
                   </span>
                 </Form.Item>
                 <Form.Item
-                  label={`文字高度微调${
-                    adjustLevel ? `(+${adjustLevel})` : ''
-                  }`}
+                  label={
+                    <span>
+                      文字高度微调
+                      <span style={{ color: 'red' }}>
+                        {adjustLevel ? `(+${adjustLevel})` : ''}
+                      </span>
+                    </span>
+                  }
+                  extra={
+                    <Button
+                      color="warning"
+                      onClick={() => {
+                        setAdjustLevel(0);
+                      }}
+                    >
+                      &nbsp;不调节&nbsp;
+                    </Button>
+                  }
                 >
                   <Slider
                     value={adjustLevel}
@@ -716,7 +748,19 @@ export default function IndexPage() {
                   />
                 </Form.Item>
                 <Form.Item
-                  label={`上下间距${rowSpaceGap ? `(${rowSpaceGap}mm)` : ''}`}
+                  label={
+                    <span>
+                      上下间距
+                      {rowSpaceGap ? (
+                        <span style={{ color: 'red' }}>
+                          ({rowSpaceGap > 0 ? `+${rowSpaceGap}` : rowSpaceGap}
+                          mm)
+                        </span>
+                      ) : (
+                        '(0mm)'
+                      )}
+                    </span>
+                  }
                   extra={
                     <Button
                       color="warning"
@@ -747,7 +791,19 @@ export default function IndexPage() {
                       设置为0
                     </Button>
                   }
-                  label={`左右间距${colSpaceGap ? `(${colSpaceGap}mm)` : ''}`}
+                  label={
+                    <span>
+                      左右间距
+                      {colSpaceGap ? (
+                        <span style={{ color: 'red' }}>
+                          ({colSpaceGap > 0 ? `+${colSpaceGap}` : colSpaceGap}
+                          mm)
+                        </span>
+                      ) : (
+                        '(0mm)'
+                      )}
+                    </span>
+                  }
                 >
                   <Slider
                     style={{ '--fill-color': '#ff8f1f' }}
