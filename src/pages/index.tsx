@@ -103,7 +103,6 @@ const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
-  const [scale, setScale] = useState(1);
   const [rowSpaceGap, setRowSpaceGap] = useState(0);
   const [colSpaceGap, setColSpaceGap] = useState(0);
 
@@ -325,15 +324,6 @@ export default function IndexPage() {
 
   useEffect(() => {
     try {
-      const w = (
-        document.querySelector('.calculateInnerItem') as any
-      ).getBoundingClientRect().width;
-      setScale(window.innerWidth / w);
-    } catch (e) {}
-  }, []);
-
-  useEffect(() => {
-    try {
       const configuration = JSON.parse(
         localStorage.getItem(CacheKey) as string,
       );
@@ -542,9 +532,6 @@ export default function IndexPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.calculateItem}>
-        <div className={'calculateInnerItem'}>&nbsp;</div>
-      </div>
       <div className={styles.settings}>
         <div id="settingsArea" className={styles.settingsArea}>
           <h1
