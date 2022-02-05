@@ -16,6 +16,7 @@
   background-color: #fff;
 }
 .root {
+  position: relative;
   width: 100%;
   -webkit-touch-callout: none; /* iOS Safari */
 
@@ -157,9 +158,8 @@
   overflow: hidden;
 }
 .printAreaA4 {
-  display: none;
   color: red;
-  visibility: hidden;
+  overflow: hidden;
 }
 .row {
   display: flex;
@@ -191,33 +191,35 @@
   }
 }
 .emptyWord {
-  display: none !important;
+  // display: none !important;
 }
 
 // 210mm×297mm
 .privewAreaA4 {
   width: 100%;
-  .a4::after {
-    display: block;
-    position: absolute;
-    left: 0;
-    background-color: #aaa;
-    bottom: 0;
-    font-size: 12px;
-    content: ' ';
-    height: 2px;
-    width: 100%;
-    z-index: 2;
-  }
+  // display: none;
+  overflow: hidden;
   .a4 {
     width: 100%;
     color: red;
     background-color: #333;
-    position: relative;
     display: flex;
 
     & > div {
       width: 100%;
+      position: relative;
+      &::after {
+        display: block;
+        position: absolute;
+        left: 0;
+        background-color: #aaa;
+        bottom: 0;
+        // font-size: 12px;
+        content: ' ';
+        height: 1px;
+        width: 100%;
+        z-index: 2;
+      }
     }
   }
 }
@@ -233,6 +235,48 @@
   width: 100%;
   z-index: 100;
   background-color: #fff;
+}
+
+.printAreaA4 {
+  position: relative;
+  display: none;
+  visibility: hidden;
+  &::after {
+    display: block;
+    content: ' ';
+    background-color: #000;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  & > div + div {
+    &::after {
+      display: block;
+      content: ' ';
+      background-color: #fff;
+      height: 0;
+      border: 1px dashed #fff;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+  }
+  & > div {
+    position: relative;
+    z-index: 9;
+  }
+}
+.calculateItem {
+  height: 1px;
+  overflow: hidden;
+  background-color: #f4f7fa;
+  & > div {
+    height: 1px;
+    width: 210mm;
+  }
 }
 @media print {
   html,
@@ -250,5 +294,15 @@
   .printAreaA4 {
     visibility: visible;
     display: block;
+
+    &::after {
+      display: none;
+    }
+
+    & > div + div {
+      &::after {
+        display: none;
+      }
+    }
   }
 }

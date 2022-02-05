@@ -103,6 +103,7 @@ const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
+  const [scale, setScale] = useState(1);
   const [rowSpaceGap, setRowSpaceGap] = useState(0);
   const [colSpaceGap, setColSpaceGap] = useState(0);
 
@@ -114,17 +115,6 @@ export default function IndexPage() {
   const [textChanged, setTextChanged] = useState(true);
   const [adjustLevel, setAdjustLevel] = useState(defaultMark);
   const [sizeSettings, setSizeSettings] = useState<string[]>([]);
-
-  const nextPosDeg = () => {
-    const idx = degs.findIndex((item) => item === rotataDeg);
-    console.log('idx: ', idx);
-    if (idx + 1 >= degs.length) {
-      console.log('next deg: ', degs[0]);
-      return degs[0];
-    }
-    console.log('next deg: ', degs[idx + 1]);
-    return degs[idx + 1];
-  };
 
   const nextNegDeg = () => {
     const idx = degs.findIndex((item) => item === rotataDeg);
@@ -182,12 +172,12 @@ export default function IndexPage() {
     const columns = Math.floor(A4.w / width) || 1;
     const rows = Math.floor(A4.h / height) || 1;
 
-    const renderContainerW = window.innerWidth - paddingLeft;
+    const renderContainerW = window.innerWidth;
 
-    const a4H = (renderContainerW * A4.h) / A4.w;
+    const a4H = (window.innerWidth * A4.h) / A4.w;
 
     // width / 210 = x / renderContainerW
-    const renderW = Math.floor((renderContainerW * width) / A4.w);
+    const renderW = Math.floor((window.innerWidth * width) / A4.w);
     // height/ 297 = y / a4H
     const renderH = Math.floor((a4H * height) / A4.h);
 
@@ -241,10 +231,10 @@ export default function IndexPage() {
       actualCols,
       // 实际占用行数
       actualRows,
-      printGap: Math.floor((A4.h - rows * height) / 4),
+      printGap: Math.floor((A4.h - rows * height) / 2),
       // printGap: 0,
       // gap: 0,
-      gap: Math.floor((a4H - rows * renderH) / 4),
+      gap: Math.floor((a4H - rows * renderH) / 2),
     };
     setSettings(configuration);
 
@@ -332,6 +322,16 @@ export default function IndexPage() {
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
     setColSpaceGap(level / 10);
   };
+
+  useEffect(() => {
+    try {
+      const w = (
+        document.querySelector('.calculateInnerItem') as any
+      ).getBoundingClientRect().width;
+      setScale(window.innerWidth / w);
+    } catch (e) {}
+  }, []);
+
   useEffect(() => {
     try {
       const configuration = JSON.parse(
@@ -343,6 +343,7 @@ export default function IndexPage() {
         localStorage.getItem(AdjustLevelKey) as string,
       );
       console.log('cache: ', configuration);
+      console.log('cache: adjustLevel', adjustLevel);
       setSettings(configuration);
       setFontFamily(font || basicColumns[0]);
       setAdjustLevel(isNaN(adjustLevel) ? defaultMark : adjustLevel);
@@ -414,23 +415,37 @@ export default function IndexPage() {
     }
     return pageIdx * sizePerPage + row * columns + col;
   };
-
-  const getOffsetStyles = (
-    rowIdx: number,
-    w: number,
-    h: number,
-    unit: string,
+  const withUnit = (
+    val: number,
+    direction: 'left' | 'right' | 'top' | 'bottom',
+    unit: 'mm' | 'px',
   ) => {
+    if (unit === 'mm') {
+      return `${val}${unit}`;
+    }
+    if (direction === 'left' || direction === 'right') {
+      // offsetW/val = innerWidth / A4.w
+      const offsetW = Math.floor((window.innerWidth * val) / A4.w);
+      return `${offsetW}${unit}`;
+    }
+    if (direction === 'top' || direction === 'bottom') {
+      const a4H = (window.innerWidth * A4.h) / A4.w;
+      // offsetH/val = a4H / A4.h
+      const offsetH = Math.floor((a4H * val) / A4.h);
+      return `${offsetH}${unit}`;
+    }
+  };
+  const getOffsetStyles = (w: number, h: number, unit: 'mm' | 'px') => {
     const offset = Math.abs(w - h) / 2;
 
     if (rotataDeg === '90') {
       if (w < h) {
-        return { right: `${offset}${unit}` };
+        return { right: `${withUnit(offset, 'right', unit)}` };
       }
     }
     if (rotataDeg === '270') {
       if (w < h) {
-        return { left: `${offset}${unit}` };
+        return { left: `${withUnit(offset, 'left', unit)}` };
       }
     }
     return {};
@@ -442,12 +457,12 @@ export default function IndexPage() {
     unit: 'mm' | 'px',
   ) => {
     const offset = Math.abs(w - h) / 2;
-    const offsetStyles = getOffsetStyles(rowIdx, w, h, unit);
+    const offsetStyles = getOffsetStyles(w, h, unit);
 
     const rowGapMargin = rowIdx * rowSpaceGap;
     if (rotataDeg === '0' || rotataDeg === '180') {
       return {
-        top: `${rowGapMargin}${unit}`,
+        top: `${withUnit(rowGapMargin, 'top', unit)}`,
       };
     }
     if (rotataDeg === '90' || rotataDeg === '270') {
@@ -455,19 +470,26 @@ export default function IndexPage() {
         ? {
             ...offsetStyles,
             ...(w < h
-              ? { top: `${rowGapMargin}${unit}`, bottom: `${offset}${unit}` }
-              : { top: `${offset + rowGapMargin}${unit}` }),
+              ? {
+                  top: `${withUnit(rowGapMargin, 'top', unit)}`,
+                  bottom: `${withUnit(offset, 'bottom', unit)}`,
+                }
+              : { top: `${withUnit(offset + rowGapMargin, 'top', unit)}` }),
           }
         : w < h
         ? {
             ...offsetStyles,
-            top: `${rowGapMargin}${unit}`,
-            bottom: `${rowIdx * (h - w) + offset}${unit}`,
+            top: `${withUnit(rowGapMargin, 'top', unit)}`,
+            bottom: `${withUnit(rowIdx * (h - w) + offset, 'bottom', unit)}`,
           }
         : {
             ...offsetStyles,
-            bottom: `${offset}${unit}`,
-            top: `${rowIdx * (w - h) + rowGapMargin + offset}${unit}`,
+            bottom: `${withUnit(offset, 'bottom', unit)}`,
+            top: `${withUnit(
+              rowIdx * (w - h) + rowGapMargin + offset,
+              'top',
+              unit,
+            )}`,
           };
     }
   };
@@ -481,17 +503,17 @@ export default function IndexPage() {
     const colGapMargin = colIdx * colSpaceGap;
     return colIdx === 0
       ? {
-          left: `${colGapMargin}${unit}`,
+          left: `${withUnit(colGapMargin, 'left', unit)}`,
         }
       : rotataDeg === '90' || rotataDeg === '270'
       ? w < h
-        ? { left: `${colGapMargin + colIdx * (h - w)}${unit}` }
+        ? { left: `${withUnit(colGapMargin + colIdx * (h - w), 'left', unit)}` }
         : {
-            left: `${colGapMargin}${unit}`,
-            right: `${colIdx * (w - h)}${unit}`,
+            left: `${withUnit(colGapMargin, 'left', unit)}`,
+            right: `${withUnit(colIdx * (w - h), 'right', unit)}`,
           }
       : {
-          left: `${colGapMargin}${unit}`,
+          left: `${withUnit(colGapMargin, 'left', unit)}`,
         };
   };
 
@@ -520,6 +542,9 @@ export default function IndexPage() {
 
   return (
     <div className={styles.root}>
+      <div className={styles.calculateItem}>
+        <div className={'calculateInnerItem'}>&nbsp;</div>
+      </div>
       <div className={styles.settings}>
         <div id="settingsArea" className={styles.settingsArea}>
           <h1
@@ -824,6 +849,125 @@ export default function IndexPage() {
 
       {textChanged ? null : (
         <div
+          className={styles.printAreaA4}
+          style={{
+            fontFamily: fontText,
+            fontWeight,
+            width: `${A4.w}mm`,
+          }}
+        >
+          {Array.from({ length: pageSize }).map((_p, pageIdx) => {
+            return (
+              <div
+                key={pageIdx}
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  border: 0,
+                  width: `${A4.w}mm`,
+                  height: `${A4.h}mm`,
+                  position: 'relative',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '5mm',
+                    position: 'absolute',
+                    fontFamily: '-apple-system, blinkmacsystemfont',
+                    top: 0,
+                    left: 0,
+                    textAlign: 'right',
+                  }}
+                >
+                  &nbsp;&nbsp;页码：{pageIdx + 1}/{pageSize}；<br />
+                </p>
+                <p
+                  style={{
+                    fontSize: '5mm',
+                    fontFamily: '-apple-system, blinkmacsystemfont',
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    textAlign: 'center',
+                  }}
+                >
+                  {fontCNName}：宽{width}mm * 高{height}mm；+ 文字高度微调：
+                  {adjustLevel}(上下间距：{rowSpaceGap}mm，左右间距{colSpaceGap}
+                  mm)
+                  <br />
+                </p>
+                <div style={{ padding: `${printGap}mm 0` }}>
+                  {Array.from({ length: rows }).map((_r, rowIdx) => {
+                    const rowStyle = getRowStyle(
+                      pageIdx * rows + rowIdx,
+                      width,
+                      height,
+                      'mm',
+                    );
+                    return (
+                      <div
+                        key={rowIdx}
+                        style={rowStyle}
+                        className={[
+                          styles.row,
+                          actualRows > rowIdx ? '' : styles.emptyWord,
+                        ].join(' ')}
+                      >
+                        {Array.from({ length: columns }).map((_c, colIdx) => {
+                          const colStyle = getColStyle(
+                            colIdx,
+                            width,
+                            height,
+                            'mm',
+                          );
+                          return (
+                            <div
+                              key={colIdx}
+                              className={[
+                                styles.col,
+                                actualCols > colIdx ? '' : styles.emptyWord,
+                              ].join(' ')}
+                              style={{
+                                ...colStyle,
+                                transform: `rotate(${rotataDeg}deg)`,
+                                width: `${width}mm`,
+                                height: `${height}mm`,
+                                textAlign: 'center',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  fontSize: `${width}mm`,
+                                  transform: `${`scale(1.03, ${
+                                    height / width +
+                                    (adjustLevel / 10) * (height / width)
+                                  })`}`,
+                                }}
+                              >
+                                {text[
+                                  getTextIndex(
+                                    textDirect,
+                                    pageIdx,
+                                    rowIdx,
+                                    colIdx,
+                                  )
+                                ] || ''}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {textChanged ? null : (
+        <div
           className={styles.kedu}
           style={{ paddingLeft: `${paddingLeft}px` }}
         >
@@ -841,10 +985,10 @@ export default function IndexPage() {
                   className={styles.a4}
                   style={{ height: `${a4H}px` }}
                 >
-                  <div style={{ paddingTop: `${gap}px` }}>
+                  <div style={{ padding: `${gap}px 0` }}>
                     {Array.from({ length: rows }).map((_r, rowIdx) => {
                       const rowStyle = getRowStyle(
-                        rowIdx,
+                        pageIdx * rows + rowIdx,
                         renderW,
                         renderH,
                         'px',
@@ -910,136 +1054,25 @@ export default function IndexPage() {
               );
             })}
           </div>
-          {!textChanged && pageSize ? (
-            <div className={styles.actionFooter}>
-              <Form.Item>
-                <Button
-                  onClick={() => {
-                    window.print();
-                  }}
-                  block
-                  color="primary"
-                  size="large"
-                >
-                  打印全部（共{pageSize}页）
-                </Button>
-              </Form.Item>
-            </div>
-          ) : null}
         </div>
       )}
 
-      <div
-        className={styles.printAreaA4}
-        style={{
-          fontFamily: fontText,
-          fontWeight,
-        }}
-      >
-        {Array.from({ length: pageSize }).map((_p, pageIdx) => {
-          return (
-            <div
-              key={pageIdx}
-              style={{
-                margin: 0,
-                padding: 0,
-                border: 0,
-                width: `${A4.w}mm`,
-                height: `${A4.h}mm`,
-                position: 'relative',
+      {!textChanged && pageSize ? (
+        <div className={styles.actionFooter}>
+          <Form.Item>
+            <Button
+              onClick={() => {
+                window.print();
               }}
+              block
+              color="primary"
+              size="large"
             >
-              <p
-                style={{
-                  fontSize: '5mm',
-                  position: 'absolute',
-                  fontFamily: '-apple-system, blinkmacsystemfont',
-                  top: 0,
-                  left: 0,
-                  textAlign: 'right',
-                }}
-              >
-                &nbsp;&nbsp;页码：{pageIdx + 1}/{pageSize}；<br />
-              </p>
-              <p
-                style={{
-                  fontSize: '5mm',
-                  fontFamily: '-apple-system, blinkmacsystemfont',
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  textAlign: 'center',
-                }}
-              >
-                {fontCNName}：宽{width}mm * 高{height}mm；+ 文字高度微调：
-                {adjustLevel}(上下间距：{rowSpaceGap}mm，左右间距{colSpaceGap}
-                mm)
-                <br />
-              </p>
-              <div style={{ paddingTop: `${printGap}mm` }}>
-                {Array.from({ length: rows }).map((_r, rowIdx) => {
-                  const rowStyle = getRowStyle(rowIdx, width, height, 'mm');
-                  return (
-                    <div
-                      key={rowIdx}
-                      style={rowStyle}
-                      className={[
-                        styles.row,
-                        actualRows > rowIdx ? '' : styles.emptyWord,
-                      ].join(' ')}
-                    >
-                      {Array.from({ length: columns }).map((_c, colIdx) => {
-                        const colStyle = getColStyle(
-                          colIdx,
-                          width,
-                          height,
-                          'mm',
-                        );
-                        return (
-                          <div
-                            key={colIdx}
-                            className={[
-                              styles.col,
-                              actualCols > colIdx ? '' : styles.emptyWord,
-                            ].join(' ')}
-                            style={{
-                              ...colStyle,
-                              transform: `rotate(${rotataDeg}deg)`,
-                              width: `${width}mm`,
-                              height: `${height}mm`,
-                              textAlign: 'center',
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: `${width}mm`,
-                                transform: `${`scale(1.03, ${
-                                  height / width +
-                                  (adjustLevel / 10) * (height / width)
-                                })`}`,
-                              }}
-                            >
-                              {text[
-                                getTextIndex(
-                                  textDirect,
-                                  pageIdx,
-                                  rowIdx,
-                                  colIdx,
-                                )
-                              ] || ''}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              打印全部（共{pageSize}页）
+            </Button>
+          </Form.Item>
+        </div>
+      ) : null}
     </div>
   );
 }
