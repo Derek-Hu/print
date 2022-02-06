@@ -4,6 +4,7 @@ import {
   Input,
   Radio,
   ActionSheet,
+  NumberKeyboard,
   Toast,
   Slider,
   Form,
@@ -88,23 +89,32 @@ const getFormattedText = (
   if (typeof content === 'string') {
     const chars = content.split(/\n/);
     chars.forEach((item, idx) => {
-      const fill = maxLen - (item.length % maxLen);
-      if (fill) {
-        chars[idx] = `${item}${Array.from({ length: fill })
-          .map((v) => ' ')
-          .join('')}`;
+      if (item.length % maxLen) {
+        const fill = maxLen - (item.length % maxLen);
+        if (fill) {
+          chars[idx] = `${item}${Array.from({ length: fill })
+            .map((v) => ' ')
+            .join('')}`;
+        }
       }
     });
     return chars.join('');
   }
   return '';
 };
+
+let wChangeTimer: any = null;
+let hChangeTimer: any = null;
+
 const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
   const [rowSpaceGap, setRowSpaceGap] = useState(0);
   const [colSpaceGap, setColSpaceGap] = useState(0);
+
+  const [wChanged, setWChanged] = useState(false);
+  const [hChanged, setHChanged] = useState(false);
 
   const [fontSheetVisible, setFontSheetVisible] = useState(false);
   const [fontFamily, setFontFamily] = useState(basicColumns[0]);
@@ -132,6 +142,24 @@ export default function IndexPage() {
   };
 
   const onValuesChange = (values: any) => {
+    if ('width' in values) {
+      if (wChangeTimer) {
+        clearTimeout(wChangeTimer);
+      }
+      setWChanged(true);
+      wChangeTimer = setTimeout(() => {
+        setWChanged(false);
+      }, 3000);
+    }
+    if ('height' in values) {
+      if (hChangeTimer) {
+        clearTimeout(hChangeTimer);
+      }
+      setHChanged(true);
+      hChangeTimer = setTimeout(() => {
+        setHChanged(false);
+      }, 3000);
+    }
     setTextChanged(true);
   };
 
@@ -349,14 +377,16 @@ export default function IndexPage() {
       console.log('tag222: ', templates);
       setSizeSettings(templates as any);
       const {
-        width = 0,
+        width = firstW,
         text = '',
         textDirect = 'l2r',
-        height = 0,
+        height = firstH,
       } = configuration || {};
       form.setFieldsValue({
         text,
         textDirect,
+        width,
+        height,
       });
 
       const tag = `${width}*${height}`;
@@ -643,21 +673,23 @@ export default function IndexPage() {
                 const cText = !isNaN(cSize) && isFinite(cSize);
                 return (
                   <p
+                    className={styles.description}
                     style={{ marginBottom: 0, fontSize: '16px', color: '#aaa' }}
                   >
-                    纸张尺寸 {A4.w}mm * {A4.h}mm
                     {rText ? (
-                      <span>
-                        <br />
+                      <span className={wChanged ? styles.wChanged : ''}>
                         字体宽{inputW}mm，一行最多显示{rSize || 1}个字
+                        <br />
                       </span>
                     ) : null}
                     {cText ? (
-                      <span>
-                        <br />
-                        字体高{inputH}mm，一页最多显示{cSize || 1}行
+                      <span className={hChanged ? styles.hChanged : ''}>
+                        字体高{inputH}mm，一页最多显示{cSize || 1}行<br />
                       </span>
                     ) : null}
+                    <span>
+                      纸张尺寸 {A4.w}mm * {A4.h}mm
+                    </span>
                   </p>
                 );
               }}
@@ -690,8 +722,9 @@ export default function IndexPage() {
         {textChanged ? null : (
           <>
             {pageSize ? (
-              <>
+              <div className={styles.adjustArea}>
                 <Form.Item
+                  style={{ paddingTop: '6px', paddingBottom: '6px' }}
                   label={
                     <span>
                       文字旋转
@@ -737,7 +770,7 @@ export default function IndexPage() {
                 <Form.Item
                   label={
                     <span>
-                      文字高度微调
+                      单个文字高度微调
                       <span style={{ color: 'red' }}>
                         {adjustLevel ? `(+${adjustLevel})` : ''}
                       </span>
@@ -828,7 +861,7 @@ export default function IndexPage() {
                     max={Math.max(width, height) * 10}
                   />
                 </Form.Item>
-              </>
+              </div>
             ) : null}
           </>
         )}
@@ -858,28 +891,20 @@ export default function IndexPage() {
               >
                 <p
                   style={{
-                    fontSize: '5mm',
-                    position: 'absolute',
-                    fontFamily: '-apple-system, blinkmacsystemfont',
-                    top: 0,
-                    left: 0,
-                    textAlign: 'right',
-                  }}
-                >
-                  &nbsp;&nbsp;页码：{pageIdx + 1}/{pageSize}；<br />
-                </p>
-                <p
-                  style={{
-                    fontSize: '5mm',
+                    fontSize: '4mm',
                     fontFamily: '-apple-system, blinkmacsystemfont',
                     position: 'absolute',
-                    bottom: 0,
+                    bottom: '8mm',
+                    lineHeight: '1',
+                    padding: 0,
+                    margin: 0,
                     right: 0,
                     textAlign: 'center',
                   }}
                 >
-                  {fontCNName}：宽{width}mm * 高{height}mm；+ 文字高度微调：
-                  {adjustLevel}(上下间距：{rowSpaceGap}mm，左右间距{colSpaceGap}
+                  页码:{pageIdx + 1}/{pageSize}；{fontCNName}:宽{width}mm*高
+                  {height}mm;单个文字高度微调:
+                  {adjustLevel}(上下间距:{rowSpaceGap}mm/左右间距{colSpaceGap}
                   mm)
                   <br />
                 </p>
