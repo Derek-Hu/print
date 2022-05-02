@@ -2,6 +2,12 @@
   font-family: 'LiSu2';
   src: url('/print/lishu.ttf');
 }
+
+@font-face {
+  font-family: 'FLS2';
+  src: url('/print/FZL2JW.TTF');
+}
+
 @font-face {
   font-family: 'KaiTi2';
   src: url('/print/KaiTi_GB2312.ttf');
@@ -218,8 +224,33 @@
     font-size: 100px;
   }
 }
-.emptyWord {
-  // display: none !important;
+
+.printTextAlignCenter {
+  .row {
+    justify-content: center;
+  }
+  .rowEmptyWord,
+  .emptyWord {
+    display: none !important;
+  }
+}
+
+:global {
+  .adm-modal-content {
+    text-align: center;
+  }
+
+  .adm-modal-body .adm-space-item:first-child {
+    display: none;
+  }
+}
+.printWholeCenter {
+  .row {
+    justify-content: center;
+  }
+  .emptyWord {
+    display: none !important;
+  }
 }
 
 // 210mm×297mm

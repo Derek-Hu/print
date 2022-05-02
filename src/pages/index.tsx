@@ -4,80 +4,139 @@ import {
   Input,
   Radio,
   ActionSheet,
-  NumberKeyboard,
   Toast,
   Slider,
+  Switch,
   Form,
+  Modal,
   Button,
 } from 'antd-mobile';
+import { Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 import { UndoOutline } from 'antd-mobile-icons';
-import md5 from 'blueimp-md5';
+import {
+  PageSizes,
+  PageRectColumns,
+  FontBasicColumns,
+  DefaultTemplate,
+  ValidSize,
+} from './constant';
+import './service';
+import queryString from 'query-string';
+import QRCode from 'qrcode.react';
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/print/sw.js');
 }
-
-const answer = '78ac00cf8aa4bce60d7f1113e32afb70';
-
-const A4 = {
-  w: 210,
-  h: 297,
-};
-
+const { confirm } = Modal;
 const paddingLeft = 0;
 const baseSize = 100;
-
-const marks = {
-  0: 0,
-  1: 1,
-  2: 2,
-  3: 3,
-  4: 4,
-  5: 5,
-  6: 6,
-};
-
-const defaultMark = 1;
-
-const tagColors = [
-  'primary',
-  'success',
-  'warning',
-  'danger',
-  '#2db7f5',
-  '#87d068',
-  '#108ee9',
-  '#2db7f5',
-];
+const { Paragraph } = Typography;
+const defaultMark = 0;
 
 const CacheKey = 'PRINT_SETTINGS';
 const SizeKey = 'PRINT_SIZE_SETTINGS';
+
+const RotateKey = 'RotateKey';
+const GapVertialKey = 'GapVertialKey';
+const GapHorizontalKey = 'GapHorizontalKey';
+
 const AdjustLevelKey = 'PRINT_ADJUST_SETTINGS';
 const FontKey = 'PRINT_FONT_SETTINGS';
+const PageRectKey = 'PRINT_PAGE_RECT_SETTINGS';
+const TextAlignKey = 'PRINT_PAGE_TEXT_ALIGN_SETTINGS';
+const WholeAlignKey = 'PRINT_PAGE_WHOLE_ALIGN_SETTINGS';
 
 const firstW = 30;
 const firstH = 40;
 
-const defaultTemplate = [
-  '25*25',
-  '30*30',
-  '30*40',
-  '40*40',
-  '50*40',
-  '110*50',
-  '120*60',
-  '130*70',
-];
 const MaxTag = 8;
+const degs = ['270', '180', '90', '0'];
+const basicColumns = FontBasicColumns;
 
-const basicColumns = [
-  { text: '隶书', key: 'LiSu2, LiSu' },
-  { text: '魏碑体', key: `WeibeiSC-Bold2, 'Weibei SC'` },
-  { text: '楷书', key: `KaiTi2, KaiTi` },
-  // { text: '行书', key: `STXingkai, 'Xingkai  SC'` },
-];
+const urlParams = queryString.parse(location.search);
+console.log('urlParams: ', urlParams);
+if (urlParams) {
+  const { f, p, t, w, vj, st, c, td, ww, wh, d, gv, gh } = urlParams;
+  localStorage.setItem(FontKey, f as string);
+  localStorage.setItem(PageRectKey, (p as string) || '');
+  if ('t' in urlParams) {
+    localStorage.setItem(TextAlignKey, (t as string) || '');
+  }
+  if ('w' in urlParams) {
+    localStorage.setItem(WholeAlignKey, (w as string) || '');
+  }
+  if ('vj' in urlParams) {
+    const vjVal = Number(urlParams.vj);
+    if (!isNaN(vjVal)) {
+      localStorage.setItem(AdjustLevelKey, `${vjVal}`);
+    }
+  }
+  if ('st' in urlParams) {
+    try {
+      const sizeTem = JSON.parse(urlParams.st as string);
+      if (Array.isArray(sizeTem)) {
+        localStorage.setItem(SizeKey, JSON.stringify(sizeTem));
+      }
+    } catch (e) {}
+  }
+
+  const urlSettings: any = {
+    text: '',
+    textDirect: 'l2r',
+  };
+
+  try {
+    const cfg = JSON.parse(localStorage.getItem(CacheKey) as string);
+    if (cfg) {
+      urlSettings.text = cfg.text;
+      urlSettings.textDirect = cfg.textDirect;
+    }
+  } catch (e) {}
+
+  if (c) {
+    urlSettings.text = c;
+  }
+  if (td) {
+    if (td === 'l2r' || td === 't2d') {
+      urlSettings.textDirect = td;
+    }
+  }
+  if (ww) {
+    const wwVal = Number(ww);
+    if (!isNaN(wwVal)) {
+      urlSettings.width = wwVal;
+    }
+  }
+
+  if (wh) {
+    const wHVal = Number(wh);
+    if (!isNaN(wHVal)) {
+      urlSettings.height = wHVal;
+    }
+  }
+
+  localStorage.setItem(CacheKey, JSON.stringify(urlSettings));
+
+  if (d && degs.indexOf(d as string) !== -1) {
+    localStorage.setItem(RotateKey, d as string);
+  }
+
+  if (gv) {
+    const gvVal = Number(gv as string);
+    if (!isNaN(gvVal)) {
+      localStorage.setItem(GapVertialKey, `${gvVal}`);
+    }
+  }
+
+  if (gh) {
+    const ghVal = Number(gh as string);
+    if (!isNaN(ghVal)) {
+      localStorage.setItem(GapHorizontalKey, `${ghVal}`);
+    }
+  }
+}
 
 const getFormattedText = (
   cols: number,
@@ -106,15 +165,21 @@ const getFormattedText = (
 let wChangeTimer: any = null;
 let hChangeTimer: any = null;
 
-const degs = ['270', '180', '90', '0'];
 export default function IndexPage() {
   const [form] = Form.useForm();
 
   const [rowSpaceGap, setRowSpaceGap] = useState(0);
   const [colSpaceGap, setColSpaceGap] = useState(0);
+  const [isTextCenter, setTextCenter] = useState<boolean>(false);
+  const [isWholeCenter, setWholeCenter] = useState<boolean>(false);
 
   const [wChanged, setWChanged] = useState(false);
   const [hChanged, setHChanged] = useState(false);
+
+  const [pageRect, setPageRect] = useState<keyof typeof PageSizes>(
+    PageRectColumns[0].key,
+  );
+  const [pageRectVisible, setPageRectVisible] = useState(false);
 
   const [fontSheetVisible, setFontSheetVisible] = useState(false);
   const [fontFamily, setFontFamily] = useState(basicColumns[0]);
@@ -125,6 +190,84 @@ export default function IndexPage() {
   const [adjustLevel, setAdjustLevel] = useState(defaultMark);
   const [sizeSettings, setSizeSettings] = useState<string[]>([]);
 
+  const setRotateSyncCache = (deg: string) => {
+    setRotateDeg(deg);
+    localStorage.setItem(RotateKey, deg);
+  };
+
+  const setRowSpaceGapSyncCache = (val: number) => {
+    setRowSpaceGap(val);
+    localStorage.setItem(GapVertialKey, `${val}`);
+  };
+
+  const setColSpaceGapSyncCache = (val: number) => {
+    setColSpaceGap(val);
+    localStorage.setItem(GapHorizontalKey, `${val}`);
+  };
+  const SelectPageRect = PageSizes[pageRect];
+
+  const onQRCode = () => {
+    let sizeTemplate = [];
+    const cfgSettings = {
+      c: '',
+      td: '',
+      ww: '',
+      wh: '',
+    };
+    try {
+      const cfg = JSON.parse(localStorage.getItem(CacheKey) as string);
+      if (cfg) {
+        cfgSettings.c = cfg.text;
+        cfgSettings.td = cfg.textDirect;
+        cfgSettings.ww = cfg.width;
+        cfgSettings.wh = cfg.height;
+      }
+      sizeTemplate = JSON.parse(localStorage.getItem(SizeKey) as string);
+    } catch (e) {}
+
+    const paramsObj: any = {
+      f: encodeURIComponent((localStorage.getItem(FontKey) as string) || ''),
+      p: localStorage.getItem(PageRectKey),
+      t: localStorage.getItem(TextAlignKey),
+      w: localStorage.getItem(WholeAlignKey),
+      vj: localStorage.getItem(AdjustLevelKey),
+      st: encodeURIComponent(JSON.stringify(sizeTemplate)),
+      c: encodeURIComponent(cfgSettings.c),
+      td: cfgSettings.td,
+      ww: cfgSettings.ww,
+      wh: cfgSettings.wh,
+      d: localStorage.getItem(RotateKey),
+      gv: localStorage.getItem(GapVertialKey),
+      gh: localStorage.getItem(GapHorizontalKey),
+    };
+    const links =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      window.location.pathname +
+      '?';
+
+    const params = Object.keys(paramsObj)
+      .map((key) => `${key}=${paramsObj[key]}`)
+      .join('&');
+
+    console.log('links + params: ', links + params);
+    confirm({
+      title: '二维码',
+
+      content: (
+        <Paragraph
+          copyable={{
+            text: links + params,
+          }}
+        >
+          点击复制链接
+        </Paragraph>
+      ),
+      cancelText: '我知道了',
+    });
+  };
+
   const nextNegDeg = () => {
     const idx = degs.findIndex((item) => item === rotataDeg);
     if (idx === 0) {
@@ -134,7 +277,6 @@ export default function IndexPage() {
   };
 
   const onSliderChange = (value: any) => {
-    console.log('onSliderChange, ', value);
     const level =
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
     setAdjustLevel(level);
@@ -164,11 +306,18 @@ export default function IndexPage() {
   };
 
   const onAction = (action: any) => {
-    console.log();
     setFontFamily(action);
     setFontSheetVisible(false);
-    localStorage.setItem(FontKey, JSON.stringify(action));
+    localStorage.setItem(FontKey, action.key);
   };
+
+  const onPageAction = (action: any) => {
+    setPageRect(action.key);
+    setPageRectVisible(false);
+    setTextChanged(true);
+    localStorage.setItem(PageRectKey, action.key);
+  };
+
   const calculate = (values: {
     textDirect: 'l2r' | 't2d';
     width: number;
@@ -185,32 +334,31 @@ export default function IndexPage() {
       return;
     }
     setTextChanged(false);
-    if (ww > A4.w || wh > A4.h) {
+    if (ww > SelectPageRect.w || wh > SelectPageRect.h) {
       Toast.show({
         icon: 'fail',
-        content: '单个文字宽度或高度超过A4纸张尺寸',
+        content: `单个文字宽度或高度超过${pageRect}纸张尺寸`,
       });
     }
     setSelectTag(`${ww}*${wh}`);
-    const width = Math.min(ww, A4.w);
-    const height = Math.min(wh, A4.h);
+    const width = Math.min(ww, SelectPageRect.w);
+    const height = Math.min(wh, SelectPageRect.h);
 
-    console.log('values, ', values);
-    const columns = Math.floor(A4.w / width) || 1;
-    const rows = Math.floor(A4.h / height) || 1;
+    const columns = Math.floor(SelectPageRect.w / width) || 1;
+    const rows = Math.floor(SelectPageRect.h / height) || 1;
 
     const renderContainerW = window.innerWidth;
 
-    const a4H = (window.innerWidth * A4.h) / A4.w;
+    const a4H = (window.innerWidth * SelectPageRect.h) / SelectPageRect.w;
 
     // width / 210 = x / renderContainerW
-    const renderW = Math.floor((window.innerWidth * width) / A4.w);
+    const renderW = Math.floor((window.innerWidth * width) / SelectPageRect.w);
     // height/ 297 = y / a4H
-    const renderH = Math.floor((a4H * height) / A4.h);
+    const renderH = Math.floor((a4H * height) / SelectPageRect.h);
 
     console.log('content: ', originalText);
-    console.log(`总行数rows = ${A4.h}/${height} = ${rows}`);
-    console.log(`总列数columns = ${A4.w}/${width} = ${columns}`);
+    console.log(`总行数rows = ${SelectPageRect.h}/${height} = ${rows}`);
+    console.log(`总列数columns = ${SelectPageRect.w}/${width} = ${columns}`);
     console.log(`textDirect = ${textDirect}`);
 
     const content = getFormattedText(columns, rows, textDirect, originalText);
@@ -235,9 +383,41 @@ export default function IndexPage() {
     console.log(`汉字渲染宽度renderW = ${renderW}`);
     console.log(`汉字渲染高度renderH = ${renderH}`);
 
-    console.log(`A4 渲染尺寸: ${A4.w}*${A4.h} -> ${renderContainerW} * ${a4H}`);
+    console.log(
+      `${PageRectColumns} 渲染尺寸: ${SelectPageRect.w}*${SelectPageRect.h} -> ${renderContainerW} * ${a4H}`,
+    );
 
+    let maxEmptyCol = 1;
+    const emptyColInfo: any = {};
+    for (let jdx = pageSize - 1; jdx >= 0; jdx--) {
+      for (let rdx = actualRows - 1; rdx >= 0; rdx--) {
+        for (let idx = actualCols - 1; idx >= 0; idx--) {
+          const word = text[getTextIndex(textDirect, jdx, rdx, idx)] || '';
+          if (
+            word !== ' ' &&
+            word !== null &&
+            word != undefined &&
+            word !== ''
+          ) {
+            if (!emptyColInfo[jdx]) {
+              emptyColInfo[jdx] = {};
+            }
+            if (
+              emptyColInfo[jdx][rdx] === undefined ||
+              emptyColInfo[jdx][rdx] === null
+            ) {
+              emptyColInfo[jdx][rdx] = idx + 1;
+              if (idx + 1 > maxEmptyCol) {
+                maxEmptyCol = idx + 1;
+              }
+            }
+          }
+        }
+      }
+    }
     const configuration = {
+      emptyColInfo,
+      maxEmptyCol,
       textDirect,
       a4H,
       // 总行数
@@ -258,7 +438,7 @@ export default function IndexPage() {
       actualCols,
       // 实际占用行数
       actualRows,
-      printGap: Math.floor((A4.h - rows * height) / 2),
+      printGap: Math.floor((SelectPageRect.h - rows * height) / 2),
       // printGap: 0,
       // gap: 0,
       gap: Math.floor((a4H - rows * renderH) / 2),
@@ -282,6 +462,7 @@ export default function IndexPage() {
     setSizeSettings([...sizeSettings]);
 
     console.log('templates', sizeSettings);
+
     localStorage.setItem(SizeKey, JSON.stringify(sizeSettings));
   };
 
@@ -291,7 +472,6 @@ export default function IndexPage() {
     height: number;
     text: string;
   }) => {
-    console.log('onFinish', values);
     calculate(values);
     setTimeout(() => {
       const settingsArea = document.getElementById('settingsArea');
@@ -317,37 +497,16 @@ export default function IndexPage() {
     } as any);
   };
 
-  const showPwd = () => {
-    const password = prompt('请输入密码', '');
-
-    if (password) {
-      const repwd = md5(password);
-      console.log(repwd, md5(repwd), answer);
-      if (md5(repwd) === answer) {
-        localStorage.setItem('pwd', repwd);
-        return;
-      }
-    }
-    showPwd();
-  };
-  useEffect(() => {
-    const cachePwd = localStorage.getItem('pwd');
-    if (cachePwd && md5(cachePwd) === answer) {
-      return;
-    }
-    showPwd();
-  }, []);
-
   const onRowSpaceChange = (value: any) => {
     const level =
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
-    setRowSpaceGap(level / 10);
+    setRowSpaceGapSyncCache(level / 10);
   };
 
   const onColSpaceChange = (value: any) => {
     const level =
       typeof value === 'number' ? value : Array.isArray(value) ? value[0] : 0;
-    setColSpaceGap(level / 10);
+    setColSpaceGapSyncCache(level / 10);
   };
 
   useEffect(() => {
@@ -355,15 +514,48 @@ export default function IndexPage() {
       const configuration = JSON.parse(
         localStorage.getItem(CacheKey) as string,
       );
+      const deg = localStorage.getItem(RotateKey);
+      if (degs.indexOf(deg as string) !== -1) {
+        setRotateDeg(deg as string);
+      }
+
+      const vertialGap = localStorage.getItem(GapVertialKey);
+      const horizontalGap = localStorage.getItem(GapHorizontalKey);
+      if (vertialGap) {
+        const vGap = Number(vertialGap);
+        if (!isNaN(vGap)) {
+          setRowSpaceGap(vGap);
+        }
+      }
+
+      if (horizontalGap) {
+        const hGap = Number(horizontalGap);
+        if (!isNaN(hGap)) {
+          setColSpaceGap(hGap);
+        }
+      }
+
       const sizeTemplate = JSON.parse(localStorage.getItem(SizeKey) as string);
-      const font = JSON.parse(localStorage.getItem(FontKey) as string);
+      const font = localStorage.getItem(FontKey) as string;
+      const pageRectCache: any = localStorage.getItem(PageRectKey) as string;
       const adjustLevel = parseInt(
         localStorage.getItem(AdjustLevelKey) as string,
       );
       console.log('cache: ', configuration);
       console.log('cache: adjustLevel', adjustLevel);
+      const isTextCenterCache = !!localStorage.getItem(TextAlignKey);
+      setTextCenter(isTextCenterCache);
+      if (isTextCenterCache) {
+        setWholeCenter(true);
+        localStorage.setItem(WholeAlignKey, '1');
+      } else {
+        setWholeCenter(!!localStorage.getItem(WholeAlignKey));
+      }
       setSettings(configuration);
-      setFontFamily(font || basicColumns[0]);
+      const currPageRect = ValidSize.indexOf(pageRectCache) !== -1;
+      setPageRect(currPageRect ? pageRectCache : PageRectColumns[0].key);
+      const currFont = FontBasicColumns.find(({ key }) => key === font);
+      setFontFamily(currFont || basicColumns[0]);
       setAdjustLevel(isNaN(adjustLevel) ? defaultMark : adjustLevel);
       let templates = [];
       if (Array.isArray(sizeTemplate) && sizeTemplate.length) {
@@ -371,17 +563,13 @@ export default function IndexPage() {
       }
 
       if (!templates.length) {
-        templates = defaultTemplate.slice(0, MaxTag);
+        templates = DefaultTemplate.slice(0, MaxTag);
       }
       console.log('configuration: ', configuration);
       console.log('tag222: ', templates);
       setSizeSettings(templates as any);
-      const {
-        width = firstW,
-        text = '',
-        textDirect = 'l2r',
-        height = firstH,
-      } = configuration || {};
+      const { width = firstW, text = '', textDirect = 'l2r', height = firstH } =
+        configuration || {};
       form.setFieldsValue({
         text,
         textDirect,
@@ -390,8 +578,13 @@ export default function IndexPage() {
       });
 
       const tag = `${width}*${height}`;
-      console.log('tag: ', tag);
 
+      console.log(
+        'templates.indexOf(tag) !== -1',
+        templates,
+        tag,
+        templates.indexOf(tag) !== -1,
+      );
       if (templates.indexOf(tag) !== -1) {
         setTimeout(() => {
           clickTag(tag);
@@ -419,6 +612,8 @@ export default function IndexPage() {
     actualRows = 0,
     rows = 0,
     pageSize = 0,
+    emptyColInfo = {},
+    maxEmptyCol = 1,
     text = '',
   } = (settings || {}) as any;
 
@@ -444,14 +639,14 @@ export default function IndexPage() {
       return `${val}${unit}`;
     }
     if (direction === 'left' || direction === 'right') {
-      // offsetW/val = innerWidth / A4.w
-      const offsetW = Math.floor((window.innerWidth * val) / A4.w);
+      // offsetW/val = innerWidth / SelectPageRect.w
+      const offsetW = Math.floor((window.innerWidth * val) / SelectPageRect.w);
       return `${offsetW}${unit}`;
     }
     if (direction === 'top' || direction === 'bottom') {
-      const a4H = (window.innerWidth * A4.h) / A4.w;
-      // offsetH/val = a4H / A4.h
-      const offsetH = Math.floor((a4H * val) / A4.h);
+      const a4H = (window.innerWidth * SelectPageRect.h) / SelectPageRect.w;
+      // offsetH/val = a4H / SelectPageRect.h
+      const offsetH = Math.floor((a4H * val) / SelectPageRect.h);
       return `${offsetH}${unit}`;
     }
   };
@@ -545,10 +740,10 @@ export default function IndexPage() {
   const [iw, ih] = selectTag
     ? selectTag.split('*').map((v) => parseFloat(v))
     : [firstW, firstH];
-  console.log('sizeSettings', sizeSettings);
-  console.log('selectTag', selectTag);
+  // console.log('sizeSettings', sizeSettings);
+  // console.log('selectTag', selectTag);
 
-  console.log('iw, ih: ', iw, ih);
+  // console.log('iw, ih: ', iw, ih);
 
   const fontText = fontFamily && fontFamily.key ? fontFamily.key : 'LiSu';
   const fontCNName = fontFamily && fontFamily.text ? fontFamily.text : '隶书';
@@ -569,14 +764,28 @@ export default function IndexPage() {
             style={{
               fontFamily: fontText,
             }}
+            onClick={onQRCode}
           >
-            文字打印
+            文字打印-点击生成二维码
           </h1>
           <Form.Item label="字体" onClick={() => setFontSheetVisible(true)}>
             <span className={styles.fontName}>
               {fontFamily && fontFamily.text}
             </span>
           </Form.Item>
+
+          <Form.Item label="纸张尺寸" onClick={() => setPageRectVisible(true)}>
+            <span className={styles.fontName}>{pageRect}</span>
+          </Form.Item>
+
+          <ActionSheet
+            extra="请选择纸张尺寸"
+            onAction={onPageAction}
+            cancelText="取消"
+            visible={pageRectVisible}
+            actions={PageRectColumns}
+            onClose={() => setPageRectVisible(false)}
+          />
 
           <ActionSheet
             extra="请选择打印的字体"
@@ -586,6 +795,7 @@ export default function IndexPage() {
             actions={basicColumns}
             onClose={() => setFontSheetVisible(false)}
           />
+
           {sizeSettings && sizeSettings.length ? (
             <>
               <Form.Item label="常用尺寸">
@@ -638,27 +848,27 @@ export default function IndexPage() {
           >
             <Form.Item
               name="width"
-              label="单字宽度/宽度 5 ~ 210（毫米）"
+              label={`单字宽度/宽度 5 ~ ${SelectPageRect.w}（毫米）`}
               rules={[{ required: true, message: '请输入宽度' }]}
             >
               <Input
                 type="number"
                 min={5}
-                max={A4.w}
-                placeholder="最小宽度5mm，最大宽度210mm"
+                max={SelectPageRect.w}
+                placeholder={`最小宽度5mm，最大宽度${SelectPageRect.w}mm`}
               />
             </Form.Item>
 
             <Form.Item
               name="height"
-              label="单字高度/高度 5 ~ 297（毫米）"
+              label={`单字高度/高度 5 ~ ${SelectPageRect.h}（毫米）`}
               rules={[{ required: true, message: '请输入高度' }]}
             >
               <Input
                 type="number"
                 min={5}
-                max={A4.h}
-                placeholder="最小高度5mm，最大高度297mm"
+                max={SelectPageRect.h}
+                placeholder={`最小高度5mm，最大高度${SelectPageRect.h}mm`}
               />
             </Form.Item>
             <Form.Item dependencies={['width', 'height']}>
@@ -666,8 +876,8 @@ export default function IndexPage() {
                 console.log('getFieldValue', getFieldValue('width'));
                 const inputW = getFieldValue('width');
                 const inputH = getFieldValue('height');
-                const rSize = Math.floor(A4.w / inputW);
-                const cSize = Math.floor(A4.h / inputH);
+                const rSize = Math.floor(SelectPageRect.w / inputW);
+                const cSize = Math.floor(SelectPageRect.h / inputH);
 
                 const rText = !isNaN(rSize) && isFinite(rSize);
                 const cText = !isNaN(cSize) && isFinite(cSize);
@@ -688,7 +898,7 @@ export default function IndexPage() {
                       </span>
                     ) : null}
                     <span>
-                      纸张尺寸 {A4.w}mm * {A4.h}mm
+                      纸张尺寸 {SelectPageRect.w}mm * {SelectPageRect.h}mm
                     </span>
                   </p>
                 );
@@ -725,6 +935,45 @@ export default function IndexPage() {
               <div className={styles.adjustArea}>
                 <Form.Item
                   style={{ paddingTop: '6px', paddingBottom: '6px' }}
+                  label={<span>水平排列</span>}
+                >
+                  <span style={{ fontSize: '15px' }}>文字居中：</span>
+                  <Switch
+                    onChange={() => {
+                      setTextCenter(!isTextCenter);
+                      if (!isTextCenter) {
+                        setWholeCenter(true);
+                        localStorage.setItem(WholeAlignKey, '1');
+                      }
+                      localStorage.setItem(
+                        TextAlignKey,
+                        !isTextCenter ? '1' : '',
+                      );
+                    }}
+                    checked={isTextCenter}
+                  />
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      marginLeft: '20px',
+                      fontSize: '15px',
+                    }}
+                  >
+                    整体居中：
+                  </span>
+                  <Switch
+                    onChange={() => {
+                      setWholeCenter(!isWholeCenter);
+                      localStorage.setItem(
+                        WholeAlignKey,
+                        !isWholeCenter ? '1' : '',
+                      );
+                    }}
+                    checked={isWholeCenter}
+                  />
+                </Form.Item>
+                <Form.Item
+                  style={{ paddingTop: '6px', paddingBottom: '6px' }}
                   label={
                     <span>
                       文字旋转
@@ -739,7 +988,7 @@ export default function IndexPage() {
                     <Button
                       color="warning"
                       onClick={() => {
-                        setRotateDeg('0');
+                        setRotateSyncCache('0');
                       }}
                     >
                       &nbsp;不旋转&nbsp;
@@ -748,7 +997,7 @@ export default function IndexPage() {
                 >
                   <span
                     onClick={() => {
-                      setRotateDeg(nextNegDeg());
+                      setRotateSyncCache(nextNegDeg());
                     }}
                     style={{
                       fontSize: '18px',
@@ -781,6 +1030,7 @@ export default function IndexPage() {
                       color="warning"
                       onClick={() => {
                         setAdjustLevel(0);
+                        localStorage.setItem(AdjustLevelKey, '0');
                       }}
                     >
                       &nbsp;不调节&nbsp;
@@ -813,7 +1063,7 @@ export default function IndexPage() {
                     <Button
                       color="warning"
                       onClick={() => {
-                        setRowSpaceGap(0);
+                        setRowSpaceGapSyncCache(0);
                       }}
                     >
                       设置为0
@@ -833,7 +1083,7 @@ export default function IndexPage() {
                     <Button
                       color="warning"
                       onClick={() => {
-                        setColSpaceGap(0);
+                        setColSpaceGapSyncCache(0);
                       }}
                     >
                       设置为0
@@ -869,11 +1119,15 @@ export default function IndexPage() {
 
       {textChanged ? null : (
         <div
-          className={styles.printAreaA4}
+          className={[
+            styles.printAreaA4,
+            isTextCenter ? styles.printTextAlignCenter : '',
+            isWholeCenter ? styles.printWholeCenter : '',
+          ].join(' ')}
           style={{
             fontFamily: fontText,
             fontWeight,
-            width: `${A4.w}mm`,
+            width: `${SelectPageRect.w}mm`,
           }}
         >
           {Array.from({ length: pageSize }).map((_p, pageIdx) => {
@@ -884,8 +1138,8 @@ export default function IndexPage() {
                   margin: 0,
                   padding: 0,
                   border: 0,
-                  width: `${A4.w}mm`,
-                  height: `${A4.h}mm`,
+                  width: `${SelectPageRect.w}mm`,
+                  height: `${SelectPageRect.h}mm`,
                   position: 'relative',
                 }}
               >
@@ -932,12 +1186,22 @@ export default function IndexPage() {
                             height,
                             'mm',
                           );
+
+                          let isEmptyCol = false;
+                          if (isTextCenter) {
+                            const rowEmptyCol =
+                              emptyColInfo[pageIdx] &&
+                              emptyColInfo[pageIdx][rowIdx];
+                            isEmptyCol = colIdx >= rowEmptyCol;
+                          }
+
                           return (
                             <div
                               key={colIdx}
                               className={[
                                 styles.col,
-                                actualCols > colIdx ? '' : styles.emptyWord,
+                                colIdx >= maxEmptyCol ? styles.emptyWord : '',
+                                isEmptyCol ? styles.rowEmptyWord : '',
                               ].join(' ')}
                               style={{
                                 ...colStyle,
@@ -951,7 +1215,7 @@ export default function IndexPage() {
                                 style={{
                                   display: 'inline-block',
                                   fontSize: `${width}mm`,
-                                  transform: `${`scale(1.03, ${
+                                  transform: `${`scale(1, ${
                                     height / width +
                                     (adjustLevel / 10) * (height / width)
                                   })`}`,
@@ -984,7 +1248,11 @@ export default function IndexPage() {
           style={{ paddingLeft: `${paddingLeft}px` }}
         >
           <div
-            className={styles.privewAreaA4}
+            className={[
+              styles.privewAreaA4,
+              isTextCenter ? styles.printTextAlignCenter : '',
+              isWholeCenter ? styles.printWholeCenter : '',
+            ].join(' ')}
             style={{
               fontFamily: fontText,
               fontWeight,
@@ -1005,6 +1273,7 @@ export default function IndexPage() {
                         renderH,
                         'px',
                       );
+
                       return (
                         <div
                           key={rowIdx}
@@ -1021,12 +1290,22 @@ export default function IndexPage() {
                               renderH,
                               'px',
                             );
+
+                            let isEmptyCol = false;
+                            if (isTextCenter) {
+                              const rowEmptyCol =
+                                emptyColInfo[pageIdx] &&
+                                emptyColInfo[pageIdx][rowIdx];
+                              isEmptyCol = colIdx >= rowEmptyCol;
+                            }
+
                             return (
                               <div
                                 key={colIdx}
                                 className={[
                                   styles.col,
-                                  actualCols > colIdx ? '' : styles.emptyWord,
+                                  colIdx >= maxEmptyCol ? styles.emptyWord : '',
+                                  isEmptyCol ? styles.rowEmptyWord : '',
                                 ].join(' ')}
                                 style={{
                                   ...colStyle,
