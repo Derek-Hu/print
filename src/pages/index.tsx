@@ -73,11 +73,11 @@ if (urlParams) {
       localStorage.setItem(AdjustLevelKey, `${vjVal}`);
     }
   }
-  if ('st' in urlParams) {
+  if (st) {
     try {
-      const sizeTem = JSON.parse(urlParams.st as string);
-      if (Array.isArray(sizeTem)) {
-        localStorage.setItem(SizeKey, JSON.stringify(sizeTem));
+      const templates = (st as string).replace(/\-/g, '*').split(',');
+      if (Array.isArray(templates)) {
+        localStorage.setItem(SizeKey, JSON.stringify(templates));
       }
     } catch (e) {}
   }
@@ -231,14 +231,16 @@ export default function IndexPage() {
       t: localStorage.getItem(TextAlignKey),
       w: localStorage.getItem(WholeAlignKey),
       vj: localStorage.getItem(AdjustLevelKey),
-      st: encodeURIComponent(JSON.stringify(sizeTemplate)),
-      c: encodeURIComponent(cfgSettings.c),
       td: cfgSettings.td,
-      ww: cfgSettings.ww,
-      wh: cfgSettings.wh,
+      ww: cfgSettings.ww || '',
+      wh: cfgSettings.wh || '',
       d: localStorage.getItem(RotateKey),
       gv: localStorage.getItem(GapVertialKey),
       gh: localStorage.getItem(GapHorizontalKey),
+      st: encodeURIComponent(
+        sizeTemplate ? sizeTemplate.join(',').replace(/\*/g, '-') : '',
+      ),
+      c: encodeURIComponent(cfgSettings.c),
     };
     const links =
       window.location.protocol +
@@ -554,8 +556,11 @@ export default function IndexPage() {
       setSettings(configuration);
       const currPageRect = ValidSize.indexOf(pageRectCache) !== -1;
       setPageRect(currPageRect ? pageRectCache : PageRectColumns[0].key);
-      const currFont = FontBasicColumns.find(({ key }) => key === font);
-      setFontFamily(currFont || basicColumns[0]);
+      const currFont =
+        FontBasicColumns.find(({ key }) => key === font) || basicColumns[0];
+      setFontFamily(currFont);
+      localStorage.setItem(FontKey, currFont.key);
+
       setAdjustLevel(isNaN(adjustLevel) ? defaultMark : adjustLevel);
       let templates = [];
       if (Array.isArray(sizeTemplate) && sizeTemplate.length) {
