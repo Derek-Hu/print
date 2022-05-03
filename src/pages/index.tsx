@@ -195,13 +195,21 @@ export default function IndexPage() {
     localStorage.setItem(RotateKey, deg);
   };
 
-  const setRowSpaceGapSyncCache = (val: number) => {
+  const setRowSpaceFixed = (val: number) => {
     setRowSpaceGap(val);
+  };
+
+  const setColSpaceFixed = (val: number) => {
+    setColSpaceGap(val);
+  };
+
+  const setRowSpaceGapSyncCache = (val: number) => {
+    setRowSpaceFixed(val);
     localStorage.setItem(GapVertialKey, `${val}`);
   };
 
   const setColSpaceGapSyncCache = (val: number) => {
-    setColSpaceGap(val);
+    setColSpaceFixed(val);
     localStorage.setItem(GapHorizontalKey, `${val}`);
   };
   const SelectPageRect = PageSizes[pageRect];
@@ -394,7 +402,7 @@ export default function IndexPage() {
     for (let jdx = pageSize - 1; jdx >= 0; jdx--) {
       for (let rdx = actualRows - 1; rdx >= 0; rdx--) {
         for (let idx = actualCols - 1; idx >= 0; idx--) {
-          const word = text[getTextIndex(textDirect, jdx, rdx, idx)] || '';
+          const word = content[getTextIndex(textDirect, jdx, rdx, idx)] || '';
           if (
             word !== ' ' &&
             word !== null &&
@@ -526,14 +534,14 @@ export default function IndexPage() {
       if (vertialGap) {
         const vGap = Number(vertialGap);
         if (!isNaN(vGap)) {
-          setRowSpaceGap(vGap);
+          setRowSpaceGapSyncCache(vGap);
         }
       }
 
       if (horizontalGap) {
         const hGap = Number(horizontalGap);
         if (!isNaN(hGap)) {
-          setColSpaceGap(hGap);
+          setColSpaceGapSyncCache(hGap);
         }
       }
 
@@ -676,9 +684,6 @@ export default function IndexPage() {
     h: number,
     unit: 'mm' | 'px',
   ) => {
-    const offset = Math.abs(w - h) / 2;
-    const offsetStyles = getOffsetStyles(w, h, unit);
-
     const rowGapMargin = rowIdx * rowSpaceGap;
     if (rotataDeg === '0' || rotataDeg === '180') {
       return {
@@ -686,25 +691,28 @@ export default function IndexPage() {
       };
     }
     if (rotataDeg === '90' || rotataDeg === '270') {
+      const offset = Math.abs(w - h) / 2;
+      const offsetStyles = getOffsetStyles(w, h, unit);
+
       return rowIdx === 0
         ? {
             ...offsetStyles,
             ...(w < h
               ? {
                   top: `${withUnit(rowGapMargin, 'top', unit)}`,
-                  bottom: `${withUnit(offset, 'bottom', unit)}`,
+                  // bottom: `${withUnit(offset, 'bottom', unit)}`,
                 }
               : { top: `${withUnit(offset + rowGapMargin, 'top', unit)}` }),
           }
         : w < h
         ? {
             ...offsetStyles,
-            top: `${withUnit(rowGapMargin, 'top', unit)}`,
-            bottom: `${withUnit(rowIdx * (h - w) + offset, 'bottom', unit)}`,
+            top: `${withUnit(rowGapMargin - rowIdx * (h - w), 'top', unit)}`,
+            // bottom: `${withUnit(rowIdx * (h - w) + offset, 'bottom', unit)}`,
           }
         : {
             ...offsetStyles,
-            bottom: `${withUnit(offset, 'bottom', unit)}`,
+            // bottom: `${withUnit(offset, 'bottom', unit)}`,
             top: `${withUnit(
               rowIdx * (w - h) + rowGapMargin + offset,
               'top',
@@ -729,8 +737,12 @@ export default function IndexPage() {
       ? w < h
         ? { left: `${withUnit(colGapMargin + colIdx * (h - w), 'left', unit)}` }
         : {
-            left: `${withUnit(colGapMargin, 'left', unit)}`,
-            right: `${withUnit(colIdx * (w - h), 'right', unit)}`,
+            left: `${withUnit(
+              colGapMargin - (colIdx * (w - h)) / 2,
+              'left',
+              unit,
+            )}`,
+            // right: `${withUnit(colIdx * (w - h), 'right', unit)}`,
           }
       : {
           left: `${withUnit(colGapMargin, 'left', unit)}`,
@@ -1068,7 +1080,7 @@ export default function IndexPage() {
                     <Button
                       color="warning"
                       onClick={() => {
-                        setRowSpaceGapSyncCache(0);
+                        onRowSpaceChange(0);
                       }}
                     >
                       设置为0
@@ -1088,7 +1100,7 @@ export default function IndexPage() {
                     <Button
                       color="warning"
                       onClick={() => {
-                        setColSpaceGapSyncCache(0);
+                        onColSpaceChange(0);
                       }}
                     >
                       设置为0
@@ -1167,7 +1179,14 @@ export default function IndexPage() {
                   mm)
                   <br />
                 </p>
-                <div style={{ padding: `${printGap}mm 0` }}>
+                <div
+                  style={{
+                    padding: `${printGap}mm 0`,
+                    marginLeft: isWholeCenter
+                      ? `${-colSpaceGap * (maxEmptyCol - 1)}mm`
+                      : '0',
+                  }}
+                >
                   {Array.from({ length: rows }).map((_r, rowIdx) => {
                     const rowStyle = getRowStyle(
                       pageIdx * rows + rowIdx,
@@ -1264,13 +1283,23 @@ export default function IndexPage() {
             }}
           >
             {Array.from({ length: pageSize }).map((_p, pageIdx) => {
+              const marginLeft = Math.floor(
+                (window.innerWidth * colSpaceGap * (maxEmptyCol - 1)) /
+                  SelectPageRect.w,
+              );
+
               return (
                 <div
                   key={pageIdx}
                   className={styles.a4}
                   style={{ height: `${a4H}px` }}
                 >
-                  <div style={{ padding: `${gap}px 0` }}>
+                  <div
+                    style={{
+                      padding: `${gap}px 0`,
+                      marginLeft: isWholeCenter ? `${-marginLeft}px` : '0',
+                    }}
+                  >
                     {Array.from({ length: rows }).map((_r, rowIdx) => {
                       const rowStyle = getRowStyle(
                         pageIdx * rows + rowIdx,
