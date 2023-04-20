@@ -1,11 +1,14 @@
 // Files to cache
-const cacheName = 'js13kPWA-v9';
+const cacheName = 'js13kPWA-v10';
 
 const appShellFiles = [
   '/print/lishu.ttf',
   '/print/classic-weibei.ttf',
   '/print/KaiTi_GB2312.ttf',
   '/print/FZL2JW.TTF',
+  '/print/liugongquan.ttf',
+  '/print/songti.ttf',
+  '/print/xingkai.ttf',
   '/print/umi.css',
   '/print/umi.js',
 ];

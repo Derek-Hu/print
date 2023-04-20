@@ -38,7 +38,9 @@ export const FontBasicColumns = [
   { text: '隶二', key: `FLS2` },
   { text: '隶书', key: 'LiSu2, LiSu' },
   { text: '魏碑体', key: `WeibeiSC-Bold2, 'Weibei SC'` },
-  { text: '楷书', key: `KaiTi2, KaiTi` },
+  { text: '行楷', key: `KaiTi3, KaiTi` },
+  { text: '柳公权体', key: `LiuTi` },
+  { text: '宋体', key: `SongTi` },
   // { text: '行书', key: `STXingkai, 'Xingkai  SC'` },
 ];
 
